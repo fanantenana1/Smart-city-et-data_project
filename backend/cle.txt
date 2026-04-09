@@ -1,0 +1,3 @@
+clé: mongodb+srv://xxxxxxxxxxxxxxxxx_appName=Cluster0
+Dase de donné: xxxxxxxx
+collection: xxxxxxxxx
