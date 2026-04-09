@@ -1,0 +1,418 @@
+/* Custom Leaflet Popup Styles */
+.custom-popup .leaflet-popup-content-wrapper {
+  background: white !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 8px !important;
+  border: 1px solid #e0e0e0 !important;
+  padding: 0 !important;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+}
+
+.custom-popup .leaflet-popup-tip {
+  background: white !important;
+  border: 1px solid #e0e0e0 !important;
+}
+
+/* Fix z-index pour éviter que la carte ne passe au-dessus des autres éléments */
+.map-wrapper {
+  isolation: isolate;
+  position: relative;
+}
+
+.leaflet-container {
+  position: relative;
+  z-index: 1 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  cursor: crosshair;
+}
+
+/* S'assurer que les contrôles de la carte restent visibles */
+.leaflet-control-container {
+  z-index: 10 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10 !important;
+}
+
+/* Fix pour les popups */
+.leaflet-popup-pane {
+  z-index: 1000 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 600 !important;
+}
+
+.leaflet-tile-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
+/* Style pour le marqueur de position utilisateur */
+.user-location-marker {
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.6));
+  transition: filter 0.3s ease;
+}
+
+.user-location-marker:hover {
+  filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.9));
+}
+
+/* Animated markers on hover */
+.leaflet-marker-icon {
+  transition: transform 0.2s ease, filter 0.2s ease !important;
+}
+
+.leaflet-marker-icon:hover {
+  transform: scale(1.1) !important;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Popup customization */
+.leaflet-container .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.leaflet-popup-content-wrapper a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.leaflet-popup-content-wrapper a:hover {
+  text-decoration: underline;
+}
+
+/* Animation pour la route tracée */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+.animated-route {
+  animation: dash 30s linear infinite;
+}
+
+/* Style amélioré pour les polylines de route */
+.leaflet-interactive {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Progress bar styling */
+.leaflet-popup-content-wrapper .progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.leaflet-popup-content-wrapper .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #1e40af);
+  transition: width 0.3s ease;
+}
+
+/* Loading spinner for route calculation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Style pour l'affichage des coordonnées au survol */
+.coordinates-display {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 1000;
+  background: rgba(17, 24, 39, 0.95);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+/* Boussole - Position en haut à gauche */
+.compass-control {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.compass-rose {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 2px solid #3b82f6;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compass-direction {
+  position: absolute;
+  font-weight: bold;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.compass-north {
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #dc2626;
+  font-size: 16px;
+}
+
+.compass-east {
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #3b82f6;
+}
+
+.compass-south {
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #6b7280;
+}
+
+.compass-west {
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+
+.compass-center {
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Bouton de recentrage - Position en haut à droite */
+.recenter-control {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+}
+
+.recenter-button {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: #3b82f6;
+}
+
+.recenter-button:hover {
+  background: #3b82f6;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.recenter-button:active {
+  transform: scale(0.95);
+}
+
+/* Effet de pulse pour le marqueur utilisateur */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+}
+
+/* Amélioration de la stabilité des marqueurs */
+.leaflet-marker-icon {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .custom-popup .leaflet-popup-content {
+    width: auto !important;
+  }
+  
+  .leaflet-container {
+    height: 400px !important;
+  }
+
+  .coordinates-display {
+    top: 60px;
+    right: 12px;
+    padding: 8px 12px;
+    font-size: 10px;
+  }
+
+  .compass-rose {
+    width: 60px;
+    height: 60px;
+  }
+
+  .compass-direction {
+    font-size: 11px;
+  }
+
+  .compass-north {
+    font-size: 13px;
+    top: 6px;
+  }
+
+  .compass-east,
+  .compass-west {
+    font-size: 11px;
+  }
+
+  .compass-south {
+    bottom: 6px;
+  }
+
+  .recenter-button {
+    width: 35px;
+    height: 35px;
+  }
+
+  .recenter-button svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Attribution style */
+.leaflet-control-attribution {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+/* Prevent map interaction issues */
+.leaflet-container .leaflet-control-zoom-in,
+.leaflet-container .leaflet-control-zoom-out {
+  text-decoration: none !important;
+  color: black !important;
+}
+
+/* Style pour le cercle de précision GPS */
+.leaflet-interactive[stroke="#3b82f6"] {
+  animation: pulse-accuracy 3s ease-in-out infinite;
+}
+
+@keyframes pulse-accuracy {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Amélioration visuelle de la route */
+.leaflet-overlay-pane path[stroke="#dc2626"] {
+  filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3));
+}
+
+/* Style pour les tooltips de distance */
+.distance-tooltip {
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Curseur personnalisé pour la carte */
+.leaflet-container.leaflet-drag-target {
+  cursor: grab;
+}
+
+.leaflet-container.leaflet-drag-target:active {
+  cursor: grabbing;
+}
+
+/* Transition fluide pour les changements de vue */
+.leaflet-zoom-animated {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Empêcher le clignotement et assurer la stabilité */
+.leaflet-container,
+.leaflet-container * {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+
+/* Désactiver les transitions automatiques indésirables */
+.leaflet-container .leaflet-map-pane {
+  will-change: auto !important;
+}
+
+/* Améliorer les performances de rendu */
+.leaflet-tile-container {
+  pointer-events: none;
+}
+
+.leaflet-tile {
+  pointer-events: none;
+}

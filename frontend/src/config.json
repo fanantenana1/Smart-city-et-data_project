@@ -1,0 +1,32 @@
+{
+  "api": {
+    "baseUrl": "http://localhost:8000/api",
+    "wsUrl": "ws://localhost:8000/ws"
+  },
+  "app": {
+    "name": "SmartWaste",
+    "version": "1.0.0",
+    "commune": "Fianarantsoa",
+    "country": "Madagascar"
+  },
+  "defaults": {
+    "updateInterval": 60000,
+    "wsReconnectInterval": 5000,
+    "mapZoom": 13,
+    "mapCenter": {
+      "lat": -21.4531,
+      "lng": 47.0856
+    }
+  },
+  "thresholds": {
+    "critical": 95,
+    "warning": 80,
+    "batteryLow": 20
+  },
+  "features": {
+    "enableWebSocket": true,
+    "enablePolling": false,
+    "enableNotifications": true,
+    "enableExport": true
+  }
+}

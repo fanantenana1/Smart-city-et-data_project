@@ -1,0 +1,48 @@
+# Environnements
+venv/
+.venv/
+env/
+ENV/
+node_modules/
+
+# Dépendances
+.egg-info/
+dist/
+build/
+*.egg
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Environnement
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Fichiers temporaires
+*.tmp
+*.temp
+.tmp/
+
+# Build frontend
+frontend/build/
+frontend/.build/
+
+# Données sensibles
+cle.txt
+"Key bot télégramme.txt"

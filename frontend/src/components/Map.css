@@ -1,0 +1,81 @@
+/* Styles pour la Carte Leaflet */
+.leaflet-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  z-index: 1 !important;
+  position: relative;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-popup-tip {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-control-attribution {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+/* Fix z-index pour les panes */
+.leaflet-pane {
+  z-index: auto !important;
+}
+
+.leaflet-tile-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
+.leaflet-shadow-pane {
+  z-index: 500 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 600 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 650 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 700 !important;
+}
+
+/* Marqueurs personnalisés */
+.bin-marker-critical {
+  background-color: #ff6b6b;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+}
+
+.bin-marker-attention {
+  background-color: #ffd93d;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 217, 61, 0.6);
+}
+
+.bin-marker-normal {
+  background-color: #6bcf7f;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(107, 207, 127, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .leaflet-container {
+    height: 400px !important;
+  }
+}
