@@ -2,7 +2,7 @@ import axios from "axios";
 import { API_URLS, API_CONFIG, DEBUG_CONFIG } from "./config";
 
 // Utiliser la configuration centralisée
-const BASE = 'http://localhost:8000';
+const BASE = API_URLS.BASE_URL || 'http://localhost:8000';
 
 if (DEBUG_CONFIG.logAPI) {
   console.log('API Configuration:', {

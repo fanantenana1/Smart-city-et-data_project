@@ -431,8 +431,8 @@ async def register_user(user_data: UserRegistration):
         'phone_number': user_data.phone_number,
         'password_hash': user_data.password,  # In production, hash this!
         'role': 'operator',  # default role
-        'is_active': False,
-        'is_approved': False,
+        'is_active': True,
+        'is_approved': True,
         'created_at': datetime.now().isoformat(),
         'last_login': None,
         'assigned_bins': []

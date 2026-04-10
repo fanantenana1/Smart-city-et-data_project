@@ -1,3 +1,8 @@
-clé: mongodb+srv://xxxxxxxxxxxxxxxxx_appName=Cluster0
-Dase de donné: xxxxxxxx
-collection: xxxxxxxxx
+clé: mongodb+srv://fafa000fafa0n2:fafa000fafa0n2@cluster0.3r37ll9.mongodb.net/?appName=Cluster0
+Dase de donné: DaB_Poubelles
+collection: poubelles
+
+
+
+
+
