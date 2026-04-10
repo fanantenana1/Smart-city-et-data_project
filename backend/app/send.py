@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Configuration email depuis les variables d'environnement ou valeurs par défaut
 EMAIL_SENDER = os.getenv('EMAIL_SENDER', "fafa000fafa0n1@gmail.com")
-EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD', "osbzapaarfetocco")
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD', "key_xxxxxxxxxxxxx")
 SMTP_SERVER = os.getenv('SMTP_SERVER', "smtp.gmail.com")
 SMTP_PORT = int(os.getenv('SMTP_PORT', 465))
 
@@ -214,4 +214,8 @@ if __name__ == "__main__":
         fill_level=98.5,
         status="critical"
     )
+<<<<<<< HEAD
     print(f"Résultat du test: {' Succès' if result else ' Échec'}")
+=======
+    print(f"Résultat du test: {'✅ Succès' if result else '❌ Échec'}")
+>>>>>>> a612e353b25388bfb5eef16c98a055627ada6051
