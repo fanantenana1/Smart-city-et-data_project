@@ -441,7 +441,7 @@ const MapPageEnhanced = ({ bins, selectedBin, setSelectedBin, assignedBins = [] 
               {!isTrackingLocation && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    💡 Activez votre position pour voir les itinéraires vers les poubelles
+                    Activez votre position pour voir les itinéraires vers les poubelles
                   </p>
                 </div>
               )}

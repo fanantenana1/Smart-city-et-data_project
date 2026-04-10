@@ -661,7 +661,7 @@ const SimpleUserDashboard = () => {
                         <p className="text-xs text-gray-600 mt-1">Remplissage: {bin.fill_level}%</p>
                         {userLocation && (
                           <p className="text-xs text-blue-600 mt-1 font-semibold">
-                            📏 Distance: {calculateDistance(userLocation, [bin.latitude, bin.longitude])}
+                             Distance: {calculateDistance(userLocation, [bin.latitude, bin.longitude])}
                           </p>
                         )}
                         <button
@@ -711,7 +711,7 @@ const SimpleUserDashboard = () => {
                   <p className="text-sm text-gray-700">{localSelectedBin.location}</p>
                   {userLocation && (
                     <p className="text-sm text-blue-600 font-semibold mt-2">
-                      📏 Distance: {calculateDistance(userLocation, [localSelectedBin.latitude, localSelectedBin.longitude])}
+                       Distance: {calculateDistance(userLocation, [localSelectedBin.latitude, localSelectedBin.longitude])}
                     </p>
                   )}
                 </div>

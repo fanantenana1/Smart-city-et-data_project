@@ -1,0 +1,364 @@
+/* Styles pour la page de rapport Malagasy */
+
+.reports-page-malagasy {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.reports-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.spinner {
+  font-size: 48px;
+  margin-bottom: 20px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* En-tête */
+.reports-header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #1f2937;
+}
+
+.reports-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.reports-header .subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+/* Sélecteur de période */
+.period-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 40px;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.filter-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.filter-btn {
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  color: #666;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.date-input {
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  max-width: 200px;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.date-input:hover,
+.date-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
+/* Grille de statistiques */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+  border-left: 5px solid #3b82f6;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card svg {
+  width: 40px;
+  height: 40px;
+  color: #3b82f6;
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.stat-unit {
+  font-size: 0.8rem;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.stat-collectes { border-left-color: #3b82f6; }
+.stat-collectes svg { color: #3b82f6; }
+
+.stat-volume { border-left-color: #10b981; }
+.stat-volume svg { color: #10b981; }
+
+.stat-average { border-left-color: #f59e0b; }
+.stat-average svg { color: #f59e0b; }
+
+.stat-critical { border-left-color: #ef4444; }
+.stat-critical svg { color: #ef4444; }
+
+/* Section des graphiques */
+.charts-section {
+  display: grid;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.chart-container {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* Section des alertes */
+.alerts-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+}
+
+.alerts-section h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.alerts-list {
+  display: grid;
+  gap: 15px;
+}
+
+.alert-item {
+  padding: 20px;
+  border-left: 5px solid #ef4444;
+  background: #fef2f2;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.alert-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.alert-header h3 {
+  font-size: 1.1rem;
+  color: #1f2937;
+  margin: 0;
+}
+
+.severity-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.alert-details {
+  display: flex;
+  gap: 30px;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.alert-details p {
+  margin: 0;
+}
+
+.alert-details strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Section du résumé */
+.summary-section {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  margin-bottom: 40px;
+}
+
+.summary-section h2 {
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 15px;
+}
+
+.summary-content {
+  color: white;
+}
+
+.summary-content p {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 15px;
+  opacity: 0.95;
+}
+
+.summary-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .reports-page-malagasy {
+    padding: 20px 10px;
+  }
+
+  .reports-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .alert-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .summary-section {
+    padding: 25px;
+  }
+
+  .chart-container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reports-page-malagasy {
+    padding: 15px 8px;
+  }
+
+  .reports-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .reports-header .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .filter-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-card svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}

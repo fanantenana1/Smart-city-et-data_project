@@ -26,10 +26,10 @@ def send_alert_email(bin_id: str, location: str, fill_level: float, status: str,
         subject = f"🚨 ALERTE URGENTE - Poubelle {bin_id}"
         priority = "Urgent"
     elif status == "attention" or fill_level >= 80:
-        subject = f"⚠️ ALERTE - Poubelle {bin_id}"
+        subject = f" ALERTE - Poubelle {bin_id}"
         priority = "Important"
     else:
-        subject = f"ℹ️ Information - Poubelle {bin_id}"
+        subject = f" Information - Poubelle {bin_id}"
         priority = "Normal"
 
     # Corps de l'email en HTML pour un meilleur rendu
@@ -56,7 +56,7 @@ def send_alert_email(bin_id: str, location: str, fill_level: float, status: str,
     <body>
         <div class="container">
             <div class="header">
-                <h1>🗑️ SmartWaste - Système de Gestion des Déchets</h1>
+                <h1> SmartWaste - Système de Gestion des Déchets</h1>
             </div>
             
             <div class="content">
@@ -158,7 +158,7 @@ Commune de Fianarantsoa
     msg.attach(part2)
 
     try:
-        print(f"📧 Tentative envoi email pour {bin_id} à {len(receivers)} destinataire(s)")
+        print(f" Tentative envoi email pour {bin_id} à {len(receivers)} destinataire(s)")
         print(f"   Destinataires: {receivers}")
         print(f"   Priorité: {priority}")
         
@@ -167,18 +167,18 @@ Commune de Fianarantsoa
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_SENDER, receivers, msg.as_string())
         
-        print(f"✅ Email d'alerte envoyé avec succès pour {bin_id}")
+        print(f" Email d'alerte envoyé avec succès pour {bin_id}")
         return True
         
     except smtplib.SMTPAuthenticationError as e:
-        print(f"❌ Erreur d'authentification SMTP pour {bin_id}: {e}")
+        print(f" Erreur d'authentification SMTP pour {bin_id}: {e}")
         print("   Vérifiez EMAIL_SENDER et EMAIL_PASSWORD dans les variables d'environnement")
         return False
     except smtplib.SMTPException as e:
-        print(f"❌ Erreur SMTP pour {bin_id}: {e}")
+        print(f" Erreur SMTP pour {bin_id}: {e}")
         return False
     except Exception as e:
-        print(f"❌ Erreur inattendue lors de l'envoi email pour {bin_id}: {e}")
+        print(f" Erreur inattendue lors de l'envoi email pour {bin_id}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -201,17 +201,17 @@ async def send_alert_email_async(bin_id: str, location: str, fill_level: float, 
         )
         return result
     except Exception as e:
-        print(f"❌ Erreur async email pour {bin_id}: {e}")
+        print(f" Erreur async email pour {bin_id}: {e}")
         return False
 
 
 # Test de la fonction (à exécuter uniquement en mode développement)
 if __name__ == "__main__":
-    print("🧪 Test d'envoi d'email...")
+    print(" Test d'envoi d'email...")
     result = send_alert_email(
         bin_id="POUB_001",
         location="Rue de la Paix, Fianarantsoa",
         fill_level=98.5,
         status="critical"
     )
-    print(f"Résultat du test: {'✅ Succès' if result else '❌ Échec'}")
+    print(f"Résultat du test: {' Succès' if result else ' Échec'}")

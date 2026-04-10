@@ -10,7 +10,7 @@ const UserManagementPage = () => {
   const [viewingUser, setViewingUser] = useState(null);
   const [allBins, setAllBins] = useState([]);
   const [managingBinsUser, setManagingBinsUser] = useState(null);
-  // ✅ NOUVEAUX ÉTATS pour la création d'utilisateur
+  //  NOUVEAUX ÉTATS pour la création d'utilisateur
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({
     username: '',
@@ -44,7 +44,7 @@ const UserManagementPage = () => {
       console.error('Erreur chargement poubelles:', err);
     }
   };
-  // ✅ NOUVELLE FONCTION : Ouvrir le modal de création
+  //  NOUVELLE FONCTION : Ouvrir le modal de création
   const openCreateModal = () => {
     setShowCreateModal(true);
     setCreateForm({
@@ -57,7 +57,7 @@ const UserManagementPage = () => {
       profile_image: null
     });
   };
-  // ✅ NOUVELLE FONCTION : Fermer le modal de création
+  //  NOUVELLE FONCTION : Fermer le modal de création
   const cancelCreate = () => {
     setShowCreateModal(false);
     setCreateForm({
@@ -70,7 +70,7 @@ const UserManagementPage = () => {
       profile_image: null
     });
   };
-  // ✅ NOUVELLE FONCTION : Créer un nouvel utilisateur
+  //  NOUVELLE FONCTION : Créer un nouvel utilisateur
   const handleCreateUser = async () => {
     // Validation
     if (!createForm.username || !createForm.password) {
@@ -89,7 +89,7 @@ const UserManagementPage = () => {
     }
     try {
       const token = localStorage.getItem('sw_token') || localStorage.getItem('token') || '';
-      console.log('📤 handleCreateUser payload:', JSON.stringify({
+      console.log(' handleCreateUser payload:', JSON.stringify({
         username: createForm.username,
         email: createForm.email,
         full_name: createForm.full_name,
@@ -186,7 +186,7 @@ const UserManagementPage = () => {
   };
   const saveEdit = async () => {
     try {
-      console.log('📤 saveEdit payload:', JSON.stringify(editForm));
+      console.log(' saveEdit payload:', JSON.stringify(editForm));
       await updateUser(editingUser, editForm);
       setError('');
       alert('Utilisateur modifié avec succès !');
@@ -241,19 +241,19 @@ const UserManagementPage = () => {
   };
   const getStatusBadge = (user) => {
     if (!user.is_approved) {
-      return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">⏳ En attente d'approbation</span>;
+      return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold"> En attente d'approbation</span>;
     }
     if (!user.is_active) {
-      return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">❌ Rejeté</span>;
+      return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold"> Rejeté</span>;
     }
-    return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">✅ Approuvé</span>;
+    return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"> Approuvé</span>;
   };
   const getRoleBadge = (role) => {
     const badges = {
-      admin: { bg: 'bg-purple-100', text: 'text-purple-800', label: '👑 Admin' },
-      operator: { bg: 'bg-blue-100', text: 'text-blue-800', label: '🚛 Opérateur' },
-      collector: { bg: 'bg-blue-100', text: 'text-blue-800', label: '🚛 Collecteur' },
-      simple_user: { bg: 'bg-gray-100', text: 'text-gray-800', label: '👤 Utilisateur' }
+      admin: { bg: 'bg-purple-100', text: 'text-purple-800', label: ' Admin' },
+      operator: { bg: 'bg-blue-100', text: 'text-blue-800', label: ' Opérateur' },
+      collector: { bg: 'bg-blue-100', text: 'text-blue-800', label: ' Collecteur' },
+      simple_user: { bg: 'bg-gray-100', text: 'text-gray-800', label: ' Utilisateur' }
     };
     const badge = badges[role] || badges.simple_user;
     return (
@@ -280,7 +280,7 @@ const UserManagementPage = () => {
           <h2 className="text-3xl font-bold text-gray-800">Gestion des Utilisateurs</h2>
           <p className="text-gray-600 mt-1">Gérez les comptes utilisateurs et leurs permissions</p>
         </div>
-        {/* ✅ NOUVEAU BOUTON : Ajouter un utilisateur */}
+        {/*  NOUVEAU BOUTON : Ajouter un utilisateur */}
         <button
           onClick={openCreateModal}
           className="flex items-center space-x-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-all shadow-md transform hover:scale-105 font-semibold"
@@ -471,7 +471,7 @@ const UserManagementPage = () => {
           </div>
         )}
       </div>
-      {/* ✅ NOUVEAU MODAL : Créer un utilisateur */}
+      {/*  NOUVEAU MODAL : Créer un utilisateur */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -627,10 +627,10 @@ const UserManagementPage = () => {
                     onChange={(e) => setCreateForm({...createForm, role: e.target.value})}
                     className="w-full border rounded px-3 py-2"
                   >
-                    <option value="simple_user">👤 Utilisateur Simple</option>
-                    <option value="operator">🚛 Opérateur</option>
-                    <option value="collector">🚛 Collecteur</option>
-                    <option value="admin">👑 Administrateur</option>
+                    <option value="simple_user">Utilisateur Simple</option>
+                    <option value="operator">Opérateur</option>
+                    <option value="collector">Collecteur</option>
+                    <option value="admin">Administrateur</option>
                   </select>
                 </div>
               </div>
@@ -862,10 +862,10 @@ const UserManagementPage = () => {
                     onChange={(e) => setEditForm({...editForm, role: e.target.value})}
                     className="w-full border rounded px-3 py-2"
                   >
-                    <option value="simple_user">👤 Utilisateur Simple</option>
-                    <option value="operator">🚛 Opérateur</option>
-                    <option value="collector">🚛 Collecteur</option>
-                    <option value="admin">👑 Administrateur</option>
+                    <option value="simple_user">Utilisateur Simple</option>
+                    <option value="operator">Opérateur</option>
+                    <option value="collector">Collecteur</option>
+                    <option value="admin">Administrateur</option>
                   </select>
                 </div>
               </div>

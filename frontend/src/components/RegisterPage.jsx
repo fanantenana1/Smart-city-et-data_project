@@ -43,7 +43,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      console.log('📤 Envoi requête inscription:', {
+      console.log('Envoi requête inscription:', {
         username: formData.username,
         email: formData.email,
         full_name: formData.name
@@ -58,7 +58,7 @@ export default function RegisterPage() {
         password: formData.password,
       });
 
-      console.log('✅ Réponse inscription:', response.data);
+      console.log('Réponse inscription:', response.data);
 
       if (response.status === 200) {
         setSuccess(true);
@@ -67,7 +67,7 @@ export default function RegisterPage() {
         setError(response.data.detail || 'Erreur lors de la création du compte.');
       }
     } catch (err) {
-      console.error('❌ Erreur inscription:', err);
+      console.error('Erreur inscription:', err);
       console.error('Response:', err.response);
       
       const errorMessage = err.response?.data?.detail || 

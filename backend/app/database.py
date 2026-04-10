@@ -59,12 +59,14 @@ def connect_mongo():
                     uri = urlunsplit((parts.scheme, new_netloc, parts.path, parts.query, parts.fragment))
         except Exception:
             pass
-        _mongo_client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        _mongo_client = MongoClient(uri, serverSelectionTimeoutMS=10000, connectTimeoutMS=10000)
+        # Forcer une vérification de connexion immédiatement
+        _mongo_client.admin.command('ping')
         db = _mongo_client[MONGO_DB_NAME]
         _mongo_collection = db[MONGO_COLLECTION_NAME]
-        print(f"✅ Connexion MongoDB réussie - DB: {MONGO_DB_NAME}, Collection: {MONGO_COLLECTION_NAME}")
+        print(f" Connexion MongoDB réussie - DB: {MONGO_DB_NAME}, Collection: {MONGO_COLLECTION_NAME}")
     except Exception as e:
-        print(f"❌ Erreur connexion MongoDB: {e}")
+        print(f" Erreur connexion MongoDB: {e}")
         _mongo_client = None
         _mongo_collection = None
 def initialize_database():
@@ -81,10 +83,10 @@ def initialize_database():
                 d.pop('_id', None)
                 bins[bin_id] = d
             _cache['bins'] = bins
-            print(f"📦 Chargé {len(bins)} poubelles depuis MongoDB")
+            print(f" Chargé {len(bins)} poubelles depuis MongoDB")
             return _cache['bins']
         except Exception as e:
-            print(f"❌ Erreur lecture MongoDB: {e}")
+            print(f" Erreur lecture MongoDB: {e}")
     # Fallback: charger depuis data/bins.json si présent
     data_file = os.path.join(os.path.dirname(__file__), 'data', 'bins.json')
     try:
@@ -93,16 +95,16 @@ def initialize_database():
                 payload = json.load(f)
                 bins = payload.get('bins', {})
                 _cache['bins'] = bins
-                print(f"📦 Chargé {len(bins)} poubelles depuis fichier JSON")
+                print(f" Chargé {len(bins)} poubelles depuis fichier JSON")
                 return _cache['bins']
     except Exception as e:
-        print(f"❌ Erreur lecture fichier fallback: {e}")
+        print(f" Erreur lecture fichier fallback: {e}")
     _cache['bins'] = {}
     return _cache['bins']
 def _upsert_mongo_bin(bin_id: str, bin_data: Dict):
     connect_mongo()
     if _mongo_collection is None:
-        print(f"⚠️ Pas de connexion MongoDB pour upsert {bin_id}")
+        print(f" Pas de connexion MongoDB pour upsert {bin_id}")
         return False
     try:
         result = _mongo_collection.update_one(
@@ -110,10 +112,10 @@ def _upsert_mongo_bin(bin_id: str, bin_data: Dict):
             {'$set': bin_data}, 
             upsert=True
         )
-        print(f"✅ MongoDB upsert {bin_id}: matched={result.matched_count}, modified={result.modified_count}")
+        print(f" MongoDB upsert {bin_id}: matched={result.matched_count}, modified={result.modified_count}")
         return True
     except Exception as e:
-        print(f"❌ Erreur upsert MongoDB pour {bin_id}: {e}")
+        print(f" Erreur upsert MongoDB pour {bin_id}: {e}")
         return False
 def get_all_bins() -> Dict:
     return _cache['bins']
@@ -141,42 +143,42 @@ def update_bin(bin_id: str, bin_data: Dict) -> bool:
     return _upsert_mongo_bin(bin_id, bin_data)
 def delete_bin(bin_id: str) -> bool:
     """Supprime une poubelle - DIRECTEMENT DE MONGODB, PAS DE CONDITION SUR LE CACHE"""
-    print(f"🗑️ === DÉBUT SUPPRESSION {bin_id} ===")
+    print(f" === DÉBUT SUPPRESSION {bin_id} ===")
     # Supprimer du cache si présent (sans bloquer)
     if bin_id in _cache['bins']:
         del _cache['bins'][bin_id]
-        print(f"✅ {bin_id} supprimé du cache")
+        print(f" {bin_id} supprimé du cache")
     else:
-        print(f"ℹ️ {bin_id} absent du cache")
+        print(f"ℹ {bin_id} absent du cache")
     # TOUJOURS tenter la suppression MongoDB
     connect_mongo()
     if _mongo_collection is None:
-        print(f"❌ Pas de connexion MongoDB!")
+        print(f" Pas de connexion MongoDB!")
         return False
     try:
-        print(f"🔍 Recherche MongoDB de '{bin_id}'...")
+        print(f" Recherche MongoDB de '{bin_id}'...")
         # Supprimer directement
         result = _mongo_collection.delete_one({'bin_id': bin_id})
-        print(f"📊 MongoDB delete_one result: deleted_count={result.deleted_count}")
+        print(f" MongoDB delete_one result: deleted_count={result.deleted_count}")
         if result.deleted_count > 0:
-            print(f"✅ {bin_id} SUPPRIMÉ DE MONGODB!")
-            print(f"🗑️ === FIN SUPPRESSION {bin_id} - SUCCÈS ===\n")
+            print(f" {bin_id} SUPPRIMÉ DE MONGODB!")
+            print(f" === FIN SUPPRESSION {bin_id} - SUCCÈS ===\n")
             return True
         else:
-            print(f"⚠️ delete_one a retourné 0, tentative delete_many...")
+            print(f" delete_one a retourné 0, tentative delete_many...")
             force = _mongo_collection.delete_many({'bin_id': bin_id})
-            print(f"📊 MongoDB delete_many result: deleted_count={force.deleted_count}")
+            print(f" MongoDB delete_many result: deleted_count={force.deleted_count}")
             if force.deleted_count > 0:
-                print(f"✅ {bin_id} SUPPRIMÉ avec delete_many!")
-                print(f"🗑️ === FIN SUPPRESSION {bin_id} - SUCCÈS ===\n")
+                print(f" {bin_id} SUPPRIMÉ avec delete_many!")
+                print(f" === FIN SUPPRESSION {bin_id} - SUCCÈS ===\n")
                 return True
             else:
-                print(f"❌ {bin_id} introuvable dans MongoDB")
-                print(f"🗑️ === FIN SUPPRESSION {bin_id} - ÉCHEC ===\n")
+                print(f" {bin_id} introuvable dans MongoDB")
+                print(f" === FIN SUPPRESSION {bin_id} - ÉCHEC ===\n")
                 return False
     except Exception as e:
-        print(f"❌ Erreur MongoDB delete: {e}")
-        print(f"🗑️ === FIN SUPPRESSION {bin_id} - ERREUR ===\n")
+        print(f" Erreur MongoDB delete: {e}")
+        print(f" === FIN SUPPRESSION {bin_id} - ERREUR ===\n")
         return False
 def search_bins(query: str) -> Dict:
     """Recherche des poubelles par bin_id, location ou address"""
@@ -208,9 +210,9 @@ def initialize_users():
                     user.pop('_id', None)
                     users[username] = user
             _cache['users'] = users
-            print(f"👥 Chargé {len(users)} utilisateurs depuis MongoDB")
+            print(f" Chargé {len(users)} utilisateurs depuis MongoDB")
         except Exception as e:
-            print(f"❌ Erreur chargement utilisateurs MongoDB: {e}")
+            print(f" Erreur chargement utilisateurs MongoDB: {e}")
 def get_all_users() -> Dict:
     return _cache['users']
 def get_user(username: str) -> Optional[Dict]:
@@ -229,9 +231,9 @@ def create_user(user_data: Dict) -> bool:
     if users_collection is not None:
         try:
             users_collection.insert_one(user_data.copy())
-            print(f"✅ Utilisateur {username} créé dans MongoDB")
+            print(f" Utilisateur {username} créé dans MongoDB")
         except Exception as e:
-            print(f"❌ Erreur création utilisateur MongoDB: {e}")
+            print(f" Erreur création utilisateur MongoDB: {e}")
     return True
 def update_user(username: str, user_data: Dict) -> bool:
     if username not in _cache['users']:
@@ -245,7 +247,7 @@ def update_user(username: str, user_data: Dict) -> bool:
         try:
             users_collection.update_one({'username': username}, {'$set': user_data})
         except Exception as e:
-            print(f"❌ Erreur mise à jour utilisateur MongoDB: {e}")
+            print(f" Erreur mise à jour utilisateur MongoDB: {e}")
     return True
 def delete_user(username: str) -> bool:
     if username not in _cache['users']:
@@ -256,9 +258,9 @@ def delete_user(username: str) -> bool:
     if users_collection is not None:
         try:
             result = users_collection.delete_one({'username': username})
-            print(f"✅ Utilisateur {username} supprimé de MongoDB (deleted_count={result.deleted_count})")
+            print(f" Utilisateur {username} supprimé de MongoDB (deleted_count={result.deleted_count})")
         except Exception as e:
-            print(f"❌ Erreur suppression utilisateur MongoDB: {e}")
+            print(f" Erreur suppression utilisateur MongoDB: {e}")
     return True
 def approve_user(username: str) -> bool:
     """Approuve un utilisateur pour qu'il puisse se connecter."""
@@ -291,9 +293,9 @@ def initialize_alerts():
                 alert.pop('_id', None)
                 alerts.append(alert)
             _cache['alerts'] = alerts
-            print(f"🚨 Chargé {len(alerts)} alertes depuis MongoDB")
+            print(f" Chargé {len(alerts)} alertes depuis MongoDB")
         except Exception as e:
-            print(f"❌ Erreur chargement alertes MongoDB: {e}")
+            print(f" Erreur chargement alertes MongoDB: {e}")
 def initialize_collections():
     """Initialise les collections depuis MongoDB."""
     collections_collection = get_collections_collection()
@@ -305,9 +307,9 @@ def initialize_collections():
                 col.pop('_id', None)
                 collections.append(col)
             _cache['collections'] = collections
-            print(f"🗑️ Chargé {len(collections)} historiques de collecte depuis MongoDB")
+            print(f" Chargé {len(collections)} historiques de collecte depuis MongoDB")
         except Exception as e:
-            print(f"❌ Erreur chargement collections MongoDB: {e}")
+            print(f" Erreur chargement collections MongoDB: {e}")
 def get_all_alerts():
     """Retourne toutes les alertes en convertissant les ObjectId en string."""
     from bson import ObjectId
@@ -332,7 +334,7 @@ def create_alert(alert_data):
         try:
             alerts_collection.insert_one(alert_data)
         except Exception as e:
-            print(f"❌ Erreur sauvegarde alerte MongoDB: {e}")
+            print(f" Erreur sauvegarde alerte MongoDB: {e}")
 def update_alert(index, alert_data):
     if 0 <= index < len(_cache['alerts']):
         _cache['alerts'][index] = alert_data
@@ -345,9 +347,9 @@ def delete_alert(index):
         if alerts_collection is not None:
             try:
                 result = alerts_collection.delete_one({'bin_id': alert['bin_id'], 'timestamp': alert['timestamp']})
-                print(f"✅ Alerte supprimée de MongoDB (deleted_count={result.deleted_count})")
+                print(f" Alerte supprimée de MongoDB (deleted_count={result.deleted_count})")
             except Exception as e:
-                print(f"❌ Erreur suppression alerte MongoDB: {e}")
+                print(f" Erreur suppression alerte MongoDB: {e}")
 def delete_multiple_alerts(indices: List[int]) -> dict:
     """Supprime plusieurs alertes par leurs indices.
     Args:
@@ -355,7 +357,7 @@ def delete_multiple_alerts(indices: List[int]) -> dict:
     Returns:
         dict: Résultat avec le nombre d'alertes supprimées
     """
-    print(f"🗑️ === DÉBUT SUPPRESSION MULTIPLE DE {len(indices)} ALERTES ===")
+    print(f" === DÉBUT SUPPRESSION MULTIPLE DE {len(indices)} ALERTES ===")
     # Trier les indices en ordre décroissant pour éviter les problèmes d'indexation
     sorted_indices = sorted(indices, reverse=True)
     deleted_from_cache = 0
@@ -370,7 +372,7 @@ def delete_multiple_alerts(indices: List[int]) -> dict:
         if 0 <= index < len(_cache['alerts']):
             _cache['alerts'].pop(index)
             deleted_from_cache += 1
-    print(f"✅ {deleted_from_cache} alertes supprimées du cache")
+    print(f" {deleted_from_cache} alertes supprimées du cache")
     # Supprimer de MongoDB
     alerts_collection = get_alerts_collection()
     if alerts_collection is not None and alerts_to_delete:
@@ -382,10 +384,10 @@ def delete_multiple_alerts(indices: List[int]) -> dict:
                     'timestamp': alert['timestamp']
                 })
                 deleted_from_mongo += result.deleted_count
-            print(f"✅ {deleted_from_mongo} alertes supprimées de MongoDB")
+            print(f" {deleted_from_mongo} alertes supprimées de MongoDB")
         except Exception as e:
-            print(f"❌ Erreur suppression multiple alertes MongoDB: {e}")
-    print(f"🗑️ === FIN SUPPRESSION MULTIPLE - {deleted_from_cache} cache / {deleted_from_mongo} MongoDB ===\n")
+            print(f" Erreur suppression multiple alertes MongoDB: {e}")
+    print(f" === FIN SUPPRESSION MULTIPLE - {deleted_from_cache} cache / {deleted_from_mongo} MongoDB ===\n")
     return {
         'deleted_from_cache': deleted_from_cache,
         'deleted_from_mongo': deleted_from_mongo,
@@ -400,7 +402,7 @@ def create_collection(collection_data):
         try:
             collections_collection.insert_one(collection_data)
         except Exception as e:
-            print(f"❌ Erreur sauvegarde collection MongoDB: {e}")
+            print(f" Erreur sauvegarde collection MongoDB: {e}")
 def seed_bins():
     """Ajoute les poubelles par défaut si la collection est vide."""
     global _cache
@@ -430,9 +432,9 @@ def seed_bins():
                                 d.pop('_id', None)
                                 bins[bin_id] = d
                             _cache['bins'] = bins
-                            print(f"🌱 Seeded {len(bins)} bins to MongoDB and cache")
+                            print(f" Seeded {len(bins)} bins to MongoDB and cache")
                 except Exception as e:
-                    print(f"❌ Erreur seeding: {e} (will use JSON fallback)")
+                    print(f" Erreur seeding: {e} (will use JSON fallback)")
                     # Fallback to JSON loading
                     data_file = os.path.join(os.path.dirname(__file__), 'data', 'bins.json')
                     if os.path.exists(data_file):
@@ -440,11 +442,11 @@ def seed_bins():
                             with open(data_file, 'r', encoding='utf-8') as f:
                                 payload = json.load(f)
                                 _cache['bins'] = payload.get('bins', {})
-                                print(f"📦 Loaded {len(_cache['bins'])} bins from JSON fallback")
+                                print(f" Loaded {len(_cache['bins'])} bins from JSON fallback")
                         except Exception as je:
-                            print(f"❌ Error loading JSON fallback: {je}")
+                            print(f" Error loading JSON fallback: {je}")
         except Exception as e:
-            print(f"❌ Impossible de queryer MongoDB pour seed_bins: {e} (fallback to JSON)")
+            print(f" Impossible de queryer MongoDB pour seed_bins: {e} (fallback to JSON)")
             # Fallback: load from JSON
             data_file = os.path.join(os.path.dirname(__file__), 'data', 'bins.json')
             if os.path.exists(data_file):
@@ -452,9 +454,9 @@ def seed_bins():
                     with open(data_file, 'r', encoding='utf-8') as f:
                         payload = json.load(f)
                         _cache['bins'] = payload.get('bins', {})
-                        print(f"📦 Loaded {len(_cache['bins'])} bins from JSON fallback")
+                        print(f" Loaded {len(_cache['bins'])} bins from JSON fallback")
                 except Exception as je:
-                    print(f"❌ Error loading JSON fallback: {je}")
+                    print(f" Error loading JSON fallback: {je}")
     else:
         # No MongoDB connection, load from JSON
         data_file = os.path.join(os.path.dirname(__file__), 'data', 'bins.json')
@@ -463,6 +465,6 @@ def seed_bins():
                 with open(data_file, 'r', encoding='utf-8') as f:
                     payload = json.load(f)
                     _cache['bins'] = payload.get('bins', {})
-                    print(f"📦 Loaded {len(_cache['bins'])} bins from JSON (no MongoDB)")
+                    print(f" Loaded {len(_cache['bins'])} bins from JSON (no MongoDB)")
             except Exception as je:
-                print(f"❌ Error loading JSON: {je}")
+                print(f" Error loading JSON: {je}")

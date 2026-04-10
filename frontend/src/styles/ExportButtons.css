@@ -1,0 +1,370 @@
+/* Styles pour les boutons d'export */
+
+.export-buttons-container {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.export-header {
+  margin-bottom: 20px;
+}
+
+.export-header h3 {
+  font-size: 1.3rem;
+  color: #1f2937;
+  margin: 0 0 5px 0;
+  font-weight: 700;
+}
+
+.export-header p {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Contrôles principaux */
+.export-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.export-main-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.export-main-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.export-main-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dropdown-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+/* Menu d'export */
+.export-menu {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 15px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.export-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.export-menu-header h4 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.export-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.export-all-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+.export-all-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Grille de formats */
+.export-formats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.export-format-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.export-format-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.export-format-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.format-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  flex-shrink: 0;
+  color: #3b82f6;
+}
+
+.format-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.format-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.format-desc {
+  font-size: 0.8rem;
+  color: #666;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+/* Footer du menu */
+.export-menu-footer {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.export-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.export-info span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Statut d'export */
+.export-status {
+  margin-top: 15px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.export-status-loading {
+  background: #fef3c7;
+  color: #92400e;
+  border-left: 4px solid #f59e0b;
+}
+
+.export-status-loading::before {
+  content: '⏳';
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.export-status-success {
+  background: #d1fae5;
+  color: #065f46;
+  border-left: 4px solid #10b981;
+}
+
+.export-status-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 4px solid #ef4444;
+}
+
+/* Cartes d'info */
+.export-info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.info-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.info-card .icon {
+  font-size: 1.8rem;
+}
+
+.info-card .label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .export-buttons-container {
+    padding: 18px;
+  }
+
+  .export-formats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .export-menu-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .export-all-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .export-info-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .export-buttons-container {
+    padding: 15px;
+  }
+
+  .export-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .export-format-btn {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .format-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .export-formats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .export-info-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .info-card {
+    padding: 10px;
+  }
+
+  .info-card .icon {
+    font-size: 1.5rem;
+  }
+}

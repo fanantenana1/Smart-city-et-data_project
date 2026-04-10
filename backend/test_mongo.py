@@ -21,40 +21,40 @@ def read_mongo_uri():
 
 uri = read_mongo_uri()
 if not uri:
-    print("❌ No MongoDB URI found in cle.txt")
+    print(" No MongoDB URI found in cle.txt")
     sys.exit(1)
 
-print(f"🔗 Testing connection to: {uri}")
+print(f" Testing connection to: {uri}")
 
 try:
     client = MongoClient(uri, serverSelectionTimeoutMS=10000)
     # Test the connection
     client.admin.command('ping')
-    print("✅ MongoDB connection successful!")
+    print(" MongoDB connection successful!")
 
     # Test database access
     db = client['DaB_Poubelles']
     collections = db.list_collection_names()
-    print(f"📊 Database 'DaB_Poubelles' collections: {collections}")
+    print(f" Database 'DaB_Poubelles' collections: {collections}")
 
     # Test users collection
     users_collection = db['users']
     user_count = users_collection.count_documents({})
-    print(f"👥 Users collection has {user_count} documents")
+    print(f" Users collection has {user_count} documents")
 
     # Check admin password
     admin_user = users_collection.find_one({'username': 'admin'})
     if admin_user:
-        print(f"🔑 Admin password_hash: {admin_user.get('password_hash')}")
+        print(f" Admin password_hash: {admin_user.get('password_hash')}")
     else:
-        print("❌ Admin user not found")
+        print(" Admin user not found")
 
 except ServerSelectionTimeoutError as e:
-    print(f"❌ Connection timeout: {e}")
+    print(f" Connection timeout: {e}")
     print("Possible issues:")
     print("- Invalid credentials")
     print("- Network connectivity")
     print("- MongoDB Atlas IP whitelist")
 except Exception as e:
-    print(f"❌ Connection failed: {e}")
+    print(f" Connection failed: {e}")
     print(f"Error type: {type(e).__name__}")

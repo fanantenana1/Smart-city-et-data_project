@@ -40,14 +40,14 @@ const BinsManagementPage = ({ bins, onAddBin, onUpdateBin, onDeleteBin, onViewDe
       const ws = new WebSocket('ws://localhost:8000/ws');
       wsRef.current = ws;
       ws.onopen = () => {
-        console.log('✅ WebSocket connecté - Temps réel activé');
+        console.log('WebSocket connecté - Temps réel activé');
       };
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
           if (message.type === 'bin_update' && message.data) {
             const binId = message.data.bin_id;
-            console.log(`🔄 Mise à jour temps réel: ${binId}`, message.data);
+            console.log(`Mise à jour temps réel: ${binId}`, message.data);
             // Sauvegarder données précédentes
             setPreviousBins(prev => ({
               ...prev,
@@ -64,10 +64,10 @@ const BinsManagementPage = ({ bins, onAddBin, onUpdateBin, onDeleteBin, onViewDe
         }
       };
       ws.onerror = (error) => {
-        console.warn('⚠️ WebSocket error:', error);
+        console.warn('WebSocket error:', error);
       };
       ws.onclose = () => {
-        console.log('🔌 WebSocket déconnecté - Reconnexion dans 5s...');
+        console.log('WebSocket déconnecté - Reconnexion dans 5s...');
         setTimeout(setupWebSocket, 5000);
       };
     } catch (err) {
@@ -757,49 +757,49 @@ const BinsManagementPage = ({ bins, onAddBin, onUpdateBin, onDeleteBin, onViewDe
 <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
   <h3 className="font-semibold text-blue-900 mb-4 flex items-center">
     <Activity className="mr-2" size={20} />
-    💡 Contrôle ESP32 - Capteurs Ultrason
+    Contrôle ESP32 - Capteurs Ultrason
   </h3>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {/* Niveau du bac */}
     <div className="bg-white rounded-lg p-4 border border-blue-100">
       <p className="font-semibold text-blue-800 mb-2 flex items-center">
-        📊 Niveau du bac
+        Niveau du bac
         <TrendingUp size={14} className="ml-2 text-red-500" />
       </p>
       <p className="text-sm text-gray-600">
         Mesure via capteur ultrason (GPIO 34/35) → Distance convertie en %
       </p>
       <div className="mt-2 p-2 bg-yellow-50 rounded text-xs text-yellow-800">
-        ⚠️ &gt;95% = Alerte critique + Email
+        &gt;95% = Alerte critique + Email
       </div>
     </div>
 
     {/* Température ambiante */}
     <div className="bg-white rounded-lg p-4 border border-blue-100">
       <p className="font-semibold text-orange-800 mb-2 flex items-center">
-        🌡️ Température
+        Température
         <Minus size={14} className="ml-2 text-gray-400" />
       </p>
       <p className="text-sm text-gray-600">
         Mesure via capteur DHT22/DS18B20 (GPIO 32) → 10-50°C
       </p>
       <div className="mt-2 p-2 bg-orange-50 rounded text-xs text-orange-800">
-        ℹ️ Surveillance température ambiante
+        ℹSurveillance température ambiante
       </div>
     </div>
   </div>
 
   <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
     <p className="text-sm text-green-800">
-      <strong>✅ Temps réel activé :</strong> Les valeurs se mettent à jour automatiquement toutes les 3 secondes depuis vos ESP32.
-      Les flèches indiquent si la valeur augmente ⬆️ ou diminue ⬇️.
+      <strong>Temps réel activé :</strong> Les valeurs se mettent à jour automatiquement toutes les 3 secondes depuis vos ESP32.
+      Les flèches indiquent si la valeur augmente ⬆ou diminue ⬇.
     </p>
   </div>
 </div>
 
       {/* Légende */}
       <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-        <h3 className="font-semibold text-blue-900 mb-4">📋 Légende des États</h3>
+        <h3 className="font-semibold text-blue-900 mb-4">Légende des États</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded-full"></div>

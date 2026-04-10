@@ -28,12 +28,12 @@ if __name__ == "__main__":
     local_ip = os.getenv('SERVER_HOST') or get_local_ip()
     port = int(os.getenv('SERVER_PORT', 8000))
     
-    print(f"\n🚀 Starting SmartWaste API Server")
-    print(f"   📍 Local IP: {local_ip}")
-    print(f"   🔌 Port: {port}")
-    print(f"   🌐 Access URL: http://{local_ip}:{port}")
-    print(f"   📱 For ESP32/Devices: http://{local_ip}:{port}")
-    print(f"   💻 Local: http://127.0.0.1:{port}\n")
+    print(f"\n Starting SmartWaste API Server")
+    print(f"    Local IP: {local_ip}")
+    print(f"    Port: {port}")
+    print(f"    Access URL: http://{local_ip}:{port}")
+    print(f"    For ESP32/Devices: http://{local_ip}:{port}")
+    print(f"    Local: http://127.0.0.1:{port}\n")
     
     # Ignore signals that might cause shutdown
     def handle_signal(signum, frame):
@@ -54,9 +54,9 @@ if __name__ == "__main__":
         print("Server initialized, starting...")
         server.run()
     except KeyboardInterrupt:
-        print("\n✋ Server stopped")
+        print("\n Server stopped")
     except Exception as e:
-        print(f"❌ Server error: {e}")
+        print(f" Server error: {e}")
         import traceback
         traceback.print_exc()
 

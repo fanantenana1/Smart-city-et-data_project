@@ -5,7 +5,7 @@ import { API_URLS, API_CONFIG, DEBUG_CONFIG } from "./config";
 const BASE = 'http://localhost:8000';
 
 if (DEBUG_CONFIG.logAPI) {
-  console.log('🌐 API Configuration:', {
+  console.log('API Configuration:', {
     BASE_URL: BASE,
     LOCAL_IP: DEBUG_CONFIG.localIP,
     PORT: DEBUG_CONFIG.apiPort,
@@ -32,7 +32,7 @@ api.interceptors.request.use((config) => {
   }
   
   if (DEBUG_CONFIG.logAPI) {
-    console.log('📤 API Request:', config.url);
+    console.log('API Request:', config.url);
   }
 
   console.log('Request full URL:', (config.baseURL || '') + config.url);
@@ -44,14 +44,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     if (DEBUG_CONFIG.logAPI) {
-      console.log('📥 API Response:', response.config.url, response.status);
+      console.log('API Response:', response.config.url, response.status);
       console.log('Response data preview:', response.data ? (typeof response.data === 'string' ? response.data.substring(0, 100) : JSON.stringify(response.data).substring(0, 100)) : 'no data');
     }
     return response;
   },
   (error) => {
     if (DEBUG_CONFIG.logAPI) {
-      console.error('❌ API Error:', error.config?.url, error.response?.status);
+      console.error('API Error:', error.config?.url, error.response?.status);
     }
     return Promise.reject(error);
   }

@@ -13,13 +13,13 @@ def print_header(text):
     print("="*60)
 
 def print_success(text):
-    print(f"✅ {text}")
+    print(f" {text}")
 
 def print_error(text):
-    print(f"❌ {text}")
+    print(f" {text}")
 
 def print_warning(text):
-    print(f"⚠️  {text}")
+    print(f"  {text}")
 
 def check_python_version():
     print_header("1. Vérification de Python")
@@ -186,7 +186,7 @@ def check_dependencies():
     return True
 
 def main():
-    print("\n" + "🔍 VÉRIFICATION DE L'INSTALLATION".center(60))
+    print("\n" + " VÉRIFICATION DE L'INSTALLATION".center(60))
     print("Suppression Multiple d'Alertes - SmartWaste v2.0\n")
     
     results = []
@@ -204,7 +204,7 @@ def main():
     
     if passed == total:
         print_success(f"Tous les tests réussis ({passed}/{total})")
-        print("\n🎉 Installation complète ! Vous pouvez démarrer les serveurs.\n")
+        print("\n Installation complète ! Vous pouvez démarrer les serveurs.\n")
         print("Backend:")
         print("  cd backend")
         print("  python -m uvicorn main:app --reload")
@@ -214,8 +214,8 @@ def main():
         return 0
     else:
         print_error(f"Certains tests ont échoué ({passed}/{total})")
-        print("\n⚠️  Consultez les erreurs ci-dessus et corrigez-les.")
-        print("📖 Voir GUIDE_INSTALLATION_SIMPLE.md pour les instructions.\n")
+        print("\n  Consultez les erreurs ci-dessus et corrigez-les.")
+        print(" Voir GUIDE_INSTALLATION_SIMPLE.md pour les instructions.\n")
         return 1
 
 if __name__ == '__main__':

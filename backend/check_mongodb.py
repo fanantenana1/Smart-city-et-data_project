@@ -72,7 +72,7 @@ def test_mongodb_connection():
         
         # Vérifier que la connexion est établie
         client.admin.command('ping')
-        print("✅ Connexion à MongoDB réussie!")
+        print(" Connexion à MongoDB réussie!")
         
         # Afficher les informations du serveur
         server_info = client.server_info()
@@ -95,8 +95,8 @@ def test_mongodb_connection():
         return True
         
     except Exception as e:
-        print(f"❌ Erreur de connexion à MongoDB: {e}")
-        print("\n📋 Solutions possibles:")
+        print(f" Erreur de connexion à MongoDB: {e}")
+        print("\n Solutions possibles:")
         print("   1. Vérifier que MongoDB est démarré")
         print("   2. Vérifier que l'URI MongoDB est correct")
         print("   3. Vérifier les identifiants si authentification requise")
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     print("\n" + "="*60 + "\n")
     
     if success:
-        print("✅ Configuration MongoDB: OK")
+        print(" Configuration MongoDB: OK")
     else:
         print("❌ Configuration MongoDB: ÉCHOUÉE")
         print("\n⚠ L'application utilisera le fallback fichier JSON jusqu'à résolution")

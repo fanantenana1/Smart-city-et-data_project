@@ -50,16 +50,16 @@ const SmartWasteDashboard = () => {
       
       if (Array.isArray(data)) {
         setBins(data);
-        console.log('✅ Poubelles chargées:', data.length);
+        console.log('Poubelles chargées:', data.length);
       } else if (data && data.data && Array.isArray(data.data)) {
         setBins(data.data);
-        console.log('✅ Poubelles chargées:', data.data.length);
+        console.log('Poubelles chargées:', data.data.length);
       } else {
         console.warn('Format de réponse inattendu:', data);
         setBins([]);
       }
     } catch (error) {
-      console.error('❌ Erreur lors du chargement des poubelles:', error);
+      console.error('Erreur lors du chargement des poubelles:', error);
     }
   }, []);
 

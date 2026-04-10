@@ -67,7 +67,7 @@ const AlertsPage = ({ alerts, onResolveAlert, onDeleteAlert, onSelectBin, onNavi
 
       if (response.ok) {
         const result = await response.json();
-        console.log(`✅ ${result.deleted_count} alerte(s) supprimée(s)`);
+        console.log(` ${result.deleted_count} alerte(s) supprimée(s)`);
         setSelectedAlerts(new Set());
         setShowMultiDeleteConfirm(false);
         window.location.reload();
@@ -75,7 +75,7 @@ const AlertsPage = ({ alerts, onResolveAlert, onDeleteAlert, onSelectBin, onNavi
         alert('Erreur lors de la suppression des alertes');
       }
     } catch (error) {
-      console.error('❌ Erreur réseau:', error);
+      console.error('Erreur réseau:', error);
       alert('Erreur réseau lors de la suppression');
     }
   };

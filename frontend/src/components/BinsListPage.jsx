@@ -255,7 +255,7 @@ const BinsListPage = ({ bins, onSelectBin, onViewDetails }) => {
 
       {/* Légende */}
       <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-        <h3 className="font-semibold text-blue-900 mb-4">📋 Légende des États</h3>
+        <h3 className="font-semibold text-blue-900 mb-4">Légende des États</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded-full"></div>

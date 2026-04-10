@@ -80,6 +80,7 @@ export default function AdminDashboard() {
             <button onClick={() => setCurrentPage('map')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === 'map' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-600 hover:bg-slate-100'}`}>Carte</button>
             <button onClick={() => setCurrentPage('alerts')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === 'alerts' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-600 hover:bg-slate-100'}`}>Alertes</button>
             <button onClick={() => setCurrentPage('reports')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === 'reports' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-600 hover:bg-slate-100'}`}>Rapports</button>
+            <button onClick={() => setCurrentPage('exports')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === 'exports' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-600 hover:bg-slate-100'}`}>Exports</button>
             {user && user.role === 'admin' && (
               <button onClick={() => setCurrentPage('users')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === 'users' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-600 hover:bg-slate-100'}`}>Utilisateurs</button>
             )}
@@ -457,27 +458,27 @@ export default function AdminDashboard() {
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-white border rounded-lg p-4 text-center">
-            <Bell className="mx-auto mb-2 text-gray-600" size={24} />
+            {/*<Bell className="mx-auto mb-2 text-gray-600" size={24} />*/}
             <p className="text-2xl font-bold">{alerts.length}</p>
             <p className="text-sm text-gray-600">Total Alertes</p>
           </div>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-            <AlertTriangle className="mx-auto mb-2 text-red-600" size={24} />
+            {/*<AlertTriangle className="mx-auto mb-2 text-red-600" size={24} />*/}
             <p className="text-2xl font-bold text-red-600">{alerts.filter(a => a.type === 'urgent').length}</p>
             <p className="text-sm text-red-700">Urgentes</p>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-            <AlertTriangle className="mx-auto mb-2 text-yellow-600" size={24} />
+            {/*<AlertTriangle className="mx-auto mb-2 text-yellow-600" size={24} />*/}
             <p className="text-2xl font-bold text-yellow-600">{alerts.filter(a => a.type === 'important').length}</p>
             <p className="text-sm text-yellow-700">Importantes</p>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <Bell className="mx-auto mb-2 text-blue-600" size={24} />
+            {/*<Bell className="mx-auto mb-2 text-blue-600" size={24} />*/}
             <p className="text-2xl font-bold text-blue-600">{alerts.filter(a => a.type === 'info').length}</p>
             <p className="text-sm text-blue-700">Informations</p>
           </div>
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-            <CheckCircle className="mx-auto mb-2 text-green-600" size={24} />
+            {/*<CheckCircle className="mx-auto mb-2 text-green-600" size={24} />*/}
             <p className="text-2xl font-bold text-green-600">{alerts.filter(a => a.status === 'resolved').length}</p>
             <p className="text-sm text-green-700">Résolues</p>
           </div>
@@ -516,7 +517,7 @@ export default function AdminDashboard() {
 
           {/* En-tête tableau */}
           <div className="bg-gray-200 border-b-2 border-gray-300">
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
+            <div className="grid grid-cols-12 gap-4 px-2 py-4 items-center">
               <div className="col-span-1"></div>
               <div className="col-span-3"><h4 className="text-xl font-bold text-black">Status</h4></div>
               <div className="col-span-4"><h4 className="text-xl font-bold text-black">Poubelle</h4></div>
@@ -668,6 +669,227 @@ export default function AdminDashboard() {
     </div>
   );
 
+  // Page Exports
+  const ExportsPage = () => {
+    const [exporting, setExporting] = useState({});
+    const [exportStatus, setExportStatus] = useState({});
+
+    const handleExport = async (endpoint, format) => {
+      setExporting(prev => ({ ...prev, [format]: true }));
+      setExportStatus(prev => ({ ...prev, [format]: 'En cours...' }));
+
+      try {
+        const token = localStorage.getItem('sw_token');
+        const response = await fetch(`http://localhost:8000${endpoint}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `export_${format}_${new Date().toISOString().split('T')[0]}.${format}`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          setExportStatus(prev => ({ ...prev, [format]: 'Téléchargé avec succès' }));
+        } else {
+          setExportStatus(prev => ({ ...prev, [format]: 'Erreur lors du téléchargement' }));
+        }
+      } catch (error) {
+        console.error('Erreur export:', error);
+        setExportStatus(prev => ({ ...prev, [format]: 'Erreur réseau' }));
+      } finally {
+        setExporting(prev => ({ ...prev, [format]: false }));
+      }
+    };
+
+    const exportOptions = [
+      {
+        title: 'Export Complet JSON',
+        description: 'Toutes les données du système (poubelles, historiques, prédictions, utilisateurs)',
+        endpoint: '/api/export/json',
+        format: 'json',
+        icon: '',
+        color: 'bg-blue-500 hover:bg-blue-600'
+      },
+      {
+        title: 'Export Poubelles CSV',
+        description: 'Liste complète des poubelles avec leurs caractéristiques',
+        endpoint: '/api/export/csv/poubelles',
+        format: 'poubelles.csv',
+        icon: '',
+        color: 'bg-green-500 hover:bg-green-600'
+      },
+      {
+        title: 'Export Historiques CSV',
+        description: 'Historique complet des collectes et interventions',
+        endpoint: '/api/export/csv/historiques',
+        format: 'historiques.csv',
+        icon: '',
+        color: 'bg-purple-500 hover:bg-purple-600'
+      },
+      {
+        title: 'Export Prédictions CSV',
+        description: 'Prédictions de remplissage et recommandations de collecte',
+        endpoint: '/api/export/csv/predictions',
+        format: 'predictions.csv',
+        icon: '',
+        color: 'bg-orange-500 hover:bg-orange-600'
+      },
+      {
+        title: 'Export Utilisateurs CSV',
+        description: 'Liste des utilisateurs et leurs permissions',
+        endpoint: '/api/export/csv/utilisateurs',
+        format: 'utilisateurs.csv',
+        icon: '',
+        color: 'bg-cyan-500 hover:bg-cyan-600'
+      },
+      {
+        title: 'Export SQLite',
+        description: 'Base de données complète au format SQLite',
+        endpoint: '/api/export/sqlite',
+        format: 'sqlite',
+        icon: '',
+        color: 'bg-indigo-500 hover:bg-indigo-600'
+      },
+      {
+        title: 'Export SQL Dump',
+        description: 'Script SQL pour recréer la base de données',
+        endpoint: '/api/export/sql-dump',
+        format: 'sql',
+        icon: '',
+        color: 'bg-red-500 hover:bg-red-600'
+      },
+      {
+        title: 'Export Excel',
+        description: 'Classeur Excel avec toutes les données organisées',
+        endpoint: '/api/export/excel',
+        format: 'xlsx',
+        icon: '',
+        color: 'bg-emerald-500 hover:bg-emerald-600'
+      }
+    ];
+
+    return (
+      <div className="space-y-6 pb-20">
+        {/* En-tête */}
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="bg-emerald-100 p-3 rounded-full">
+              <TrendingUp className="text-emerald-600" size={32} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Exports de Données</h1>
+              <p className="text-gray-600">Téléchargez vos données SmartWaste dans différents formats</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="text-blue-600" size={20} />
+                <span className="font-semibold text-blue-800">Données en temps réel</span>
+              </div>
+              <p className="text-sm text-blue-600 mt-1">Toutes les données sont à jour</p>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="text-green-600" size={20} />
+                <span className="font-semibold text-green-800">Formats multiples</span>
+              </div>
+              <p className="text-sm text-green-600 mt-1">JSON, CSV, Excel, SQLite, SQL</p>
+            </div>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="text-purple-600" size={20} />
+                <span className="font-semibold text-purple-800">Sécurisé</span>
+              </div>
+              <p className="text-sm text-purple-600 mt-1">Authentification requise</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Options d'export */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {exportOptions.map((option, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+              <div className="p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <span className="text-2xl">{option.icon}</span>
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900">{option.title}</h3>
+                    <p className="text-sm text-gray-600">{option.description}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleExport(option.endpoint, option.format)}
+                    disabled={exporting[option.format]}
+                    className={`w-full ${option.color} text-white px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2`}
+                  >
+                    {exporting[option.format] ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Export en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Télécharger</span>
+                      </>
+                    )}
+                  </button>
+
+                  {exportStatus[option.format] && (
+                    <div className={`text-sm text-center p-2 rounded ${
+                      exportStatus[option.format].includes('') ? 'bg-green-50 text-green-700' :
+                      exportStatus[option.format].includes('') ? 'bg-red-50 text-red-700' :
+                      'bg-blue-50 text-blue-700'
+                    }`}>
+                      {exportStatus[option.format]}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Section d'information */}
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h2 className="text-xl font-bold mb-4">ℹ Informations sur les Exports</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Formats Disponibles</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li><strong>JSON:</strong> Format structuré pour les développeurs</li>
+                <li><strong>CSV:</strong> Format tableur compatible Excel/LibreOffice</li>
+                <li><strong>Excel:</strong> Classeur avec feuilles organisées</li>
+                <li><strong>SQLite:</strong> Base de données portable</li>
+                <li><strong>SQL Dump:</strong> Script pour recréer la base</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Utilisation Recommandée</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li><strong>Analyse:</strong> Excel ou CSV pour les rapports</li>
+                <li><strong>Sauvegarde:</strong> JSON ou SQLite</li>
+                <li><strong>Migration:</strong> SQL Dump</li>
+                <li><strong>Développement:</strong> JSON pour l'intégration</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -698,6 +920,8 @@ export default function AdminDashboard() {
           <AlertsPage alerts={alerts} onResolveAlert={resolveAlert} onSelectBin={setSelectedBin} onNavigate={setCurrentPage} />
         ) : currentPage === 'reports' ? (
           <ReportsPage bins={bins} collections={collections} statistics={statistics} />
+        ) : currentPage === 'exports' ? (
+          <ExportsPage />
         ) : currentPage === 'users' ? (
           <UserManagementPage />
         ) : currentPage === 'settings' ? (

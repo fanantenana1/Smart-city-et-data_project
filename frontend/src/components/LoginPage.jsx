@@ -16,44 +16,44 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     
-    console.log('\n🔐 ========== DÉBUT LOGIN ==========');
-    console.log(`📝 Username: ${username}`);
-    console.log(`📝 Password: ${password}`);
+    console.log('\n========== DÉBUT LOGIN ==========');
+    console.log(`Username: ${username}`);
+    console.log(`Password: ${password}`);
     
     try {
-      console.log('📡 Configuration API:', {
+      console.log('Configuration API:', {
         baseURL: api.defaults.baseURL,
         timeout: api.defaults.timeout
       });
       
-      console.log('📤 Envoi requête POST à:', api.defaults.baseURL + '/api/auth/login');
+      console.log('Envoi requête POST à:', api.defaults.baseURL + '/api/auth/login');
       const res = await postLogin(username, password);
       
-      console.log('✅ Réponse reçue!');
-      console.log('📦 res:', res);
-      console.log('📦 res.data:', res.data);
-      console.log('📦 res.status:', res.status);
+      console.log('Réponse reçue!');
+      console.log('res:', res);
+      console.log('res.data:', res.data);
+      console.log('res.status:', res.status);
       
       if (!res || !res.data) {
-        console.error('❌ ERREUR: res.data est vide!');
+        console.error('ERREUR: res.data est vide!');
         throw new Error('No response data received');
       }
       
       const token = res.data.access_token;
-      console.log('🎫 Token type:', typeof token);
-      console.log('🎫 Token value:', token ? token.substring(0, 50) + '...' : 'NULL/UNDEFINED');
+      console.log('Token type:', typeof token);
+      console.log('Token value:', token ? token.substring(0, 50) + '...' : 'NULL/UNDEFINED');
       
       if (!token) {
-        console.error('❌ ERREUR: Token est undefined!');
-        console.log('📦 Clés disponibles:', Object.keys(res.data));
+        console.error('ERREUR: Token est undefined!');
+        console.log('Clés disponibles:', Object.keys(res.data));
         throw new Error('No access_token in response');
       }
       
-      console.log('✅ Token valide!');
+      console.log('Token valide!');
       localStorage.setItem('sw_token', token);
-      console.log('💾 Token stocké dans localStorage');
+      console.log('Token stocké dans localStorage');
 
-      console.log('🎫 User info:', res.data.user);
+      console.log('User info:', res.data.user);
 
       // Decode token to check role
       const payload = token.split('.')[1];
@@ -61,21 +61,21 @@ export default function LoginPage() {
       const isAdmin = decoded.role === 'admin';
 
       const redirectPath = isAdmin ? '/dashboard' : '/simple';
-      console.log('🚀 Redirection vers', redirectPath);
+      console.log('Redirection vers', redirectPath);
 
       navigate(redirectPath);
-      console.log('✨ Navigation effectuée!');
-      console.log('🔐 ========== FIN LOGIN OK ==========\n');
+      console.log('Navigation effectuée!');
+      console.log('========== FIN LOGIN OK ==========\n');
       
     } catch (err) {
-      console.error('\n❌ ========== ERREUR LOGIN ==========');
-      console.error('❌ Code erreur:', err.code);
-      console.error('❌ Message:', err.message);
-      console.error('❌ Status:', err.response?.status);
-      console.error('❌ Data:', err.response?.data);
-      console.error('❌ Config URL:', err.config?.url);
-      console.error('❌ Erreur complète:', err);
-      console.error('🔐 ========== FIN ERREUR ==========\n');
+      console.error('\n========== ERREUR LOGIN ==========');
+      console.error('Code erreur:', err.code);
+      console.error('Message:', err.message);
+      console.error('Status:', err.response?.status);
+      console.error('Data:', err.response?.data);
+      console.error('Config URL:', err.config?.url);
+      console.error('Erreur complète:', err);
+      console.error('========== FIN ERREUR ==========\n');
       
       // Afficher l'erreur dans l'interface
       const errorMessage = err.response?.data?.detail || 

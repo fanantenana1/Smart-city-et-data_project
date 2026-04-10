@@ -81,13 +81,13 @@ export default function Dashboard() {
       </div> */}
 
       <div className="bins-section">
-        <h2>📦 Poubelles (Triées par niveau de remplissage)</h2>
+        <h2>Poubelles (Triées par niveau de remplissage)</h2>
         {binsLoading ? (
-          <p>⏳ Chargement des poubelles…</p>
+          <p>Chargement des poubelles…</p>
         ) : binsError ? (
-          <p>❌ Erreur: {String(binsError)}</p>
+          <p>Erreur: {String(binsError)}</p>
         ) : bins.length === 0 ? (
-          <p>⚪ Aucune poubelle trouvée.</p>
+          <p>Aucune poubelle trouvée.</p>
         ) : (
           <div className="bins-grid">
             {bins.map((b, index) => (
@@ -110,7 +110,7 @@ export default function Dashboard() {
                 </div>
                 <div className="bin-details">
                   <p><strong>📍 Localisation:</strong> {b.location}</p>
-                  <p><strong>📬 Adresse:</strong> {b.address}</p>
+                  <p><strong>Adresse:</strong> {b.address}</p>
                   <div className="fill-progress">
                     <div className="progress-bar">
                       <div
@@ -129,12 +129,12 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="bin-meta">
-                    <span>🔋 Batterie: {b.battery?.toFixed(1) || 'N/A'}%</span>
-                    <span>🌡️ Temp: {b.temperature?.toFixed(1) || 'N/A'}°C</span>
-                    <span>📊 Signal: {b.signal_quality || 'N/A'}</span>
+                    <span>Batterie: {b.battery?.toFixed(1) || 'N/A'}%</span>
+                    <span>Temp: {b.temperature?.toFixed(1) || 'N/A'}°C</span>
+                    <span>Signal: {b.signal_quality || 'N/A'}</span>
                   </div>
                   {b.last_collection && (
-                    <p className="last-collection"><strong>🗓️ Dernière collecte:</strong> {b.last_collection}</p>
+                    <p className="last-collection"><strong>Dernière collecte:</strong> {b.last_collection}</p>
                   )}
                 </div>
               </div>

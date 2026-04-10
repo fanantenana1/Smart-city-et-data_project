@@ -29,10 +29,10 @@ def read_mongo_uri():
 def main():
     uri = read_mongo_uri()
     if not uri:
-        print("❌ Erreur: URI MongoDB non trouvé dans cle.txt")
+        print(" Erreur: URI MongoDB non trouvé dans cle.txt")
         sys.exit(1)
 
-    print("📚 Connexion à MongoDB...")
+    print(" Connexion à MongoDB...")
     
     try:
         # Encoder les credentials si nécessaire
@@ -47,18 +47,18 @@ def main():
                     new_netloc = f"{user_enc}:{pwd_enc}@{host}"
                     uri = urlunsplit((parts.scheme, new_netloc, parts.path, parts.query, parts.fragment))
         except Exception as e:
-            print(f"⚠️ Erreur encoding: {e}")
+            print(f" Erreur encoding: {e}")
 
         client = MongoClient(uri, serverSelectionTimeoutMS=5000)
         client.admin.command('ping')
-        print("✅ Connexion réussie!")
+        print(" Connexion réussie!")
         
         db = client['DaB_Poubelles']
         
         # ===== COLLECTION UTILISATEURS =====
         users_col = db['users']
         if 'users' in db.list_collection_names():
-            print("⚠️ Collection 'users' existe. Suppression...")
+            print(" Collection 'users' existe. Suppression...")
             users_col.drop()
         
         admin_user = {
@@ -126,15 +126,15 @@ def main():
         ]
         
         admin_result = users_col.insert_one(admin_user)
-        print(f"✅ Administrateur inséré: admin")
+        print(f" Administrateur inséré: admin")
         
         users_result = users_col.insert_many(simple_users)
-        print(f"✅ {len(users_result.inserted_ids)} utilisateurs insérés")
+        print(f" {len(users_result.inserted_ids)} utilisateurs insérés")
         
         # ===== COLLECTION POUBELLES =====
         bins_col = db['poubelles']
         if 'poubelles' in db.list_collection_names():
-            print("⚠️ Collection 'poubelles' existe. Suppression...")
+            print(" Collection 'poubelles' existe. Suppression...")
             bins_col.drop()
         
         sample_bins = [
@@ -221,37 +221,37 @@ def main():
         ]
         
         bins_result = bins_col.insert_many(sample_bins)
-        print(f"✅ {len(bins_result.inserted_ids)} poubelles insérées")
+        print(f" {len(bins_result.inserted_ids)} poubelles insérées")
         
         # ===== AFFICHER RÉSUMÉ =====
         print("\n" + "="*60)
-        print("📊 RÉSUMÉ DES DONNÉES INSÉRÉES")
+        print(" RÉSUMÉ DES DONNÉES INSÉRÉES")
         print("="*60)
         
-        print(f"\n👥 Utilisateurs ({users_col.count_documents({})}):")
+        print(f"\n Utilisateurs ({users_col.count_documents({})}):")
         for user in users_col.find({}, {'_id': 0, 'password_hash': 0}):
             role = user.get('role', 'user')
-            approved = "✅" if user.get('is_approved') else "❌"
+            approved = "" if user.get('is_approved') else ""
             print(f"  {approved} {user['username']} ({role}) - {user['full_name']}")
         
-        print(f"\n🗑️ Poubelles ({bins_col.count_documents({})}):")
+        print(f"\n Poubelles ({bins_col.count_documents({})}):")
         for bin_data in bins_col.find({}, {'_id': 0}):
             print(f"  • {bin_data['bin_id']} - {bin_data['location']} ({bin_data['status']})")
         
         print("\n" + "="*60)
-        print("✅ DONNÉES INSÉRÉES AVEC SUCCÈS!")
+        print(" DONNÉES INSÉRÉES AVEC SUCCÈS!")
         print("="*60)
         
-        print("\n🔐 IDENTIFIANTS POUR LES TESTS:")
+        print("\n IDENTIFIANTS POUR LES TESTS:")
         print("  Admin:       admin / admin123")
         print("  Collector:   collector1 / collector123")
         print("  Utilisateur: user1 / user123")
-        print("\n⚠️  Note: user2 n'est PAS approuvé et ne peut pas se connecter")
+        print("\n  Note: user2 n'est PAS approuvé et ne peut pas se connecter")
         
         client.close()
         
     except Exception as e:
-        print(f"❌ Erreur: {e}")
+        print(f" Erreur: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

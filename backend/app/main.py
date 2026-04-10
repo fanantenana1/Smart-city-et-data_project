@@ -1,10 +1,14 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 import json
 import asyncio
+import os
+import io
+import random
 from .database import (
     initialize_database,
     get_all_bins,
@@ -37,6 +41,8 @@ from jose import JWTError, jwt
 from typing import Dict
 from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from statistics import mean, median
+from collections import defaultdict
 # Simple JWT settings (override via env if needed)
 SECRET_KEY = "supersecret_smartwaste_key"
 ALGORITHM = "HS256"
@@ -172,7 +178,7 @@ async def update_bin_data(data: BinData):
             )
             create_alert(alert.dict())
             await broadcast_update({"type": "alert", "data": alert.dict()})
-            # ⭐ NOUVEAU: Envoyer email à l'admin ET aux utilisateurs assignés
+            #  NOUVEAU: Envoyer email à l'admin ET aux utilisateurs assignés
             try:
                 # Email à l'admin
                 await send_alert_email_async(data.bin_id, data.location, data.fill_level, "critical")
@@ -181,7 +187,7 @@ async def update_bin_data(data: BinData):
                 for username, user_data in all_users.items():
                     if user_data.get('assigned_bins') and data.bin_id in user_data['assigned_bins']:
                         if user_data.get('email'):
-                            print(f"📧 Envoi email alerte critique à {username} ({user_data['email']}) pour {data.bin_id}")
+                            print(f" Envoi email alerte critique à {username} ({user_data['email']}) pour {data.bin_id}")
                             await send_alert_email_async(data.bin_id, data.location, data.fill_level, "critical", user_data['email'])
             except Exception as e:
                 print(f"Erreur envoi email: {e}")
@@ -206,7 +212,7 @@ async def update_bin_data(data: BinData):
                 for username, user_data in all_users.items():
                     if user_data.get('assigned_bins') and data.bin_id in user_data['assigned_bins']:
                         if user_data.get('email'):
-                            print(f"📧 Envoi email alerte importante à {username} pour {data.bin_id}")
+                            print(f" Envoi email alerte importante à {username} pour {data.bin_id}")
                             await send_alert_email_async(data.bin_id, data.location, data.fill_level, "important", user_data['email'])
             except Exception as e:
                 print(f"Erreur envoi email: {e}")
@@ -240,11 +246,11 @@ async def create_bin(bin: BinData):
     # Tenter d'enregistrer dans MongoDB
     success = db_create_bin(bin_dict)
     if not success:
-        print(f"⚠️ Avertissement: La poubelle {bin.bin_id} n'a pas pu être enregistrée dans MongoDB")
+        print(f" Avertissement: La poubelle {bin.bin_id} n'a pas pu être enregistrée dans MongoDB")
         # On peut choisir de lever une exception ou de continuer
         # raise HTTPException(status_code=500, detail="Erreur lors de l'enregistrement dans la base de données")
     else:
-        print(f"✅ Poubelle {bin.bin_id} enregistrée avec succès dans MongoDB")
+        print(f" Poubelle {bin.bin_id} enregistrée avec succès dans MongoDB")
     # Ajouter au cache en mémoire (pour la session en cours)
     bins_data[bin.bin_id] = bin_dict
     # Diffuser la mise à jour
@@ -353,7 +359,7 @@ async def delete_multiple_alerts_endpoint(alert_indices: List[int]):
             "details": result
         }
     except Exception as e:
-        print(f"❌ Erreur lors de la suppression multiple: {e}")
+        print(f" Erreur lors de la suppression multiple: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
@@ -602,7 +608,7 @@ async def delete_user(username: str, current_user: dict = Depends(jwt_required))
     else:
         raise HTTPException(status_code=404, detail="User not found")
 # Endpoints pour la gestion des assignations de poubelles aux utilisateurs
-# ⭐ NOUVEAU ENDPOINT: Récupère les poubelles assignées de l'utilisateur connecté
+#  NOUVEAU ENDPOINT: Récupère les poubelles assignées de l'utilisateur connecté
 @app.get("/api/user/assigned-bins")
 async def get_my_assigned_bins(current_user: dict = Depends(jwt_required)):
     """Récupère les poubelles assignées à l'utilisateur connecté"""
@@ -616,7 +622,7 @@ async def get_my_assigned_bins(current_user: dict = Depends(jwt_required)):
         if bin_data:
             result_bins.append(bin_data)
         else:
-            print(f"⚠️ Warning: Bin {bin_id} assigned to {current_user['username']} but not found in database")
+            print(f" Warning: Bin {bin_id} assigned to {current_user['username']} but not found in database")
     return result_bins
 @app.get("/api/users/{username}/bins")
 async def get_user_assigned_bins(username: str, current_user: dict = Depends(jwt_required)):
@@ -713,6 +719,294 @@ async def get_bin_config(bin_id: str):
 async def seed_data():
     seed_bins()
     return {"status": "success", "message": "Bins seeded"}
+
+#  ENDPOINT DE RAPPORT EN MALAGASY
+@app.get("/api/report")
+async def get_analysis_report(
+    period: str = Query("month", pattern="^(day|week|month|year)$"),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(jwt_required)
+):
+    """Génère un rapport d'analyse complet avec données Malagasy"""
+    from .database import _mongo_collection
+    
+    # Connexion à MongoDB
+    db = None
+    if _mongo_collection:
+        db = _mongo_collection.database
+    
+    if not db:
+        return {
+            "statistiques": {},
+            "historique": [],
+            "poubelles_top": [],
+            "alertes": [],
+            "predictions": []
+        }
+    
+    # Parser les dates
+    date_end = datetime.now()
+    if period == "day":
+        date_start = date_end - timedelta(days=1)
+    elif period == "week":
+        date_start = date_end - timedelta(weeks=1)
+    elif period == "month":
+        date_start = date_end - timedelta(days=30)
+    elif period == "year":
+        date_start = date_end - timedelta(days=365)
+    else:
+        date_start = date_end - timedelta(days=30)
+    
+    # Récupérer les historiques
+    history_col = db['historiques']
+    history_data = list(history_col.find({
+        'timestamp': {
+            '$gte': date_start.isoformat(),
+            '$lte': date_end.isoformat()
+        }
+    }))
+    
+    # Calculer les statistiques
+    statistiques = {
+        'total_collectes': len(history_data),
+        'volume_total': sum(h.get('volume_collected', 0) for h in history_data),
+        'volume_moyen': 0,
+        'volume_max': 0,
+        'volume_min': 0,
+        'poubelles_actives': len(set(h.get('bin_id') for h in history_data)),
+    }
+    
+    if history_data:
+        volumes = [h.get('volume_collected', 0) for h in history_data]
+        statistiques['volume_moyen'] = int(mean(volumes))
+        statistiques['volume_max'] = max(volumes)
+        statistiques['volume_min'] = min(volumes)
+    
+    # Top poubelles
+    bins_stats = defaultdict(lambda: {'collectes': 0, 'volume_total': 0, 'location': ''})
+    for h in history_data:
+        bin_id = h.get('bin_id')
+        if bin_id:
+            bins_stats[bin_id]['collectes'] += 1
+            bins_stats[bin_id]['volume_total'] += h.get('volume_collected', 0)
+            bins_stats[bin_id]['location'] = h.get('location', '')
+    
+    poubelles_top = sorted(
+        [{'id': k, **v} for k, v in bins_stats.items()],
+        key=lambda x: x['volume_total'],
+        reverse=True
+    )[:5]
+    
+    # Alertes actuelles
+    bins_col = db['poubelles']
+    all_bins = list(bins_col.find({}))
+    alertes = []
+    for b in all_bins:
+        fill = b.get('fill_level', 0)
+        if fill >= 85:
+            severity = 'CRITIQUE' if fill >= 95 else 'URGENT' if fill >= 85 else 'IMPORTANT'
+            alertes.append({
+                'bin_id': b['bin_id'],
+                'location': b['location'],
+                'fill_level': fill,
+                'severity': severity,
+                'volume': b.get('current_volume', 0),
+            })
+    
+    alertes.sort(key=lambda x: x['fill_level'], reverse=True)
+    
+    # Générer l'historique par jour pour graphique
+    historique = []
+    current = date_start
+    while current <= date_end:
+        day_data = [h for h in history_data if h['timestamp'].startswith(current.strftime('%Y-%m-%d'))]
+        historique.append({
+            'date': current.strftime('%Y-%m-%d'),
+            'collectes': len(day_data),
+            'volume': sum(h.get('volume_collected', 0) for h in day_data),
+            'poubelles_pleines': len([h for h in day_data if h.get('percentage', 0) > 80])
+        })
+        current += timedelta(days=1)
+    
+    # Prédictions simples
+    predictions = []
+    for _ in range(10):
+        future = date_end + timedelta(days=_+1)
+        predictions.append({
+            'date': future.strftime('%Y-%m-%d'),
+            'collectes_predites': statistiques['volume_moyen'] // 150 if statistiques['volume_moyen'] else 5,
+            'confiance': 75 + random.randint(5, 15)
+        })
+    
+    return {
+        'statistiques': statistiques,
+        'historique': historique[-30:],  # Dernier 30 jours
+        'poubelles_top': poubelles_top,
+        'alertes': alertes,
+        'predictions': predictions,
+        'periode': {
+            'start': date_start.isoformat(),
+            'end': date_end.isoformat(),
+            'type': period,
+        }
+    }
+
+#  ENDPOINTS D'EXPORT MULTI-FORMAT
+@app.get("/api/export/json")
+async def export_json(current_user: dict = Depends(jwt_required)):
+    """Exporte toutes les données en JSON"""
+    try:
+        from . import export_reports
+        exporteur = export_reports.ExporteurRapports()
+        data = exporteur.recuperer_donnees()
+        data = exporteur.nettoyer_donnees(data)
+        
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur export JSON: {str(e)}")
+
+@app.get("/api/export/csv/{table}")
+async def export_csv(table: str = Path(..., pattern="^(poubelles|historiques|predictions|users|utilisateurs)$"), current_user: dict = Depends(jwt_required)):
+    """Exporte une table en CSV"""
+    try:
+        from . import export_reports
+        exporteur = export_reports.ExporteurRapports()
+        table_key = 'utilisateurs' if table in ['users', 'utilisateurs'] else table
+        csv_data = exporteur.exporter_en_memoire_csv(table_key)
+        
+        if not csv_data:
+            raise HTTPException(status_code=404, detail=f"Aucune donnée pour {table}")
+        
+        # Créer un fichier temporaire
+        filename = f"{table}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        temp_path = os.path.join(os.path.dirname(__file__), '..', 'exports', filename)
+        os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+        
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            f.write(csv_data)
+        
+        return FileResponse(
+            path=temp_path,
+            media_type='text/csv',
+            filename=filename
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur export CSV: {str(e)}")
+
+@app.get("/api/export/sqlite")
+async def export_sqlite(current_user: dict = Depends(jwt_required)):
+    """Exporte toutes les données en SQLite"""
+    try:
+        from . import export_reports
+        exporteur = export_reports.ExporteurRapports()
+        filepath = exporteur.exporter_sqlite()
+        
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=500, detail="Erreur création fichier SQLite")
+        
+        return FileResponse(
+            path=filepath,
+            media_type='application/x-sqlite3',
+            filename=os.path.basename(filepath)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur export SQLite: {str(e)}")
+
+@app.get("/api/export/sql-dump")
+async def export_sql_dump(current_user: dict = Depends(jwt_required)):
+    """Exporte en SQL dump"""
+    try:
+        from . import export_reports
+        exporteur = export_reports.ExporteurRapports()
+        filepath = exporteur.exporter_sql_dump()
+        
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=500, detail="Erreur création fichier SQL")
+        
+        return FileResponse(
+            path=filepath,
+            media_type='text/plain',
+            filename=os.path.basename(filepath)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur export SQL: {str(e)}")
+
+@app.get("/api/export/excel")
+async def export_excel(current_user: dict = Depends(jwt_required)):
+    """Exporte en Excel"""
+    try:
+        from . import export_reports
+        exporteur = export_reports.ExporteurRapports()
+        filepath = exporteur.exporter_excel()
+        
+        if not filepath or not os.path.exists(filepath):
+            raise HTTPException(status_code=500, detail="Erreur export Excel - pandas/openpyxl peut ne pas être installé")
+        
+        return FileResponse(
+            path=filepath,
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            filename=os.path.basename(filepath)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur export Excel: {str(e)}")
+
+@app.get("/api/export/all")
+async def export_all(current_user: dict = Depends(jwt_required)):
+    """Exporte tous les formats disponibles et retourne les chemins"""
+    try:
+        from . import export_reports
+        exporteur = export_reports.ExporteurRapports()
+        resultats = exporteur.exporter_tous_formats()
+        
+        # Retourner les informations des fichiers créés
+        fichiers_info = {}
+        for format_name, filepath in resultats.items():
+            if filepath and os.path.exists(filepath):
+                size = os.path.getsize(filepath)
+                fichiers_info[format_name] = {
+                    'path': filepath,
+                    'filename': os.path.basename(filepath),
+                    'size_bytes': size,
+                    'size_mb': round(size / (1024 * 1024), 2),
+                    'timestamp': exporteur.timestamp
+                }
+        
+        return {
+            'status': 'success',
+            'message': f'{len(fichiers_info)} fichiers exportés',
+            'fichiers': fichiers_info,
+            'export_directory': os.path.join(os.path.dirname(__file__), '..', 'exports')
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur exports multiples: {str(e)}")
+
+@app.get("/api/export/info")
+async def export_info(current_user: dict = Depends(jwt_required)):
+    """Récupère les informations sur les exports disponibles"""
+    try:
+        from . import export_reports
+        exporteur = export_reports.ExporteurRapports()
+        donnees = exporteur.recuperer_donnees()
+        
+        return {
+            'status': 'success',
+            'formats_disponibles': ['JSON', 'CSV', 'Excel', 'SQLite', 'SQL Dump'],
+            'statistiques': {
+                'total_poubelles': len(donnees.get('poubelles', [])),
+                'total_historiques': len(donnees.get('historiques', [])),
+                'total_predictions': len(donnees.get('predictions', [])),
+                'total_utilisateurs': len(donnees.get('utilisateurs', [])),
+                'total_alertes': len(donnees.get('alertes', [])),
+            },
+            'taille_estimee_mb': sum(
+                len(donnees.get(k, [])) * 0.001 
+                for k in ['historiques', 'predictions']
+            )
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur info exports: {str(e)}")
+
 # Initialisation avec des données de test
 @app.on_event("startup")
 def startup_event():
@@ -749,7 +1043,7 @@ def startup_event():
                         'status': 'active'
                     }
                     create_alert(alert)
-                    # ⭐ NOUVEAU: Envoyer emails au démarrage pour alertes critiques
+                    #  NOUVEAU: Envoyer emails au démarrage pour alertes critiques
                     if alert_type == 'urgent':
                         from .send import send_alert_email
                         # Email à l'admin
@@ -759,7 +1053,7 @@ def startup_event():
                         for username, user_data in all_users.items():
                             if user_data.get('assigned_bins') and bin_id in user_data['assigned_bins']:
                                 if user_data.get('email'):
-                                    print(f"📧 Envoi email startup à {username} pour {bin_id}")
+                                    print(f" Envoi email startup à {username} pour {bin_id}")
                                     send_alert_email(bin_id, location, fill_level, alert_type, user_data['email'])
                     print(f"Created alert for {bin_id}: {alert_title}")
         print(f"\n{'='*60}")
@@ -767,7 +1061,7 @@ def startup_event():
         print(f"{'='*60}")
         # Afficher les noms et emplacements des poubelles
         if all_bins:
-            print("\n🗑️ LISTE DES POUBELLES ENREGISTREES:")
+            print("\n LISTE DES POUBELLES ENREGISTREES:")
             print(f"{'='*60}")
             for bin_id, bin_data in sorted(all_bins.items()):
                 location = bin_data.get('location', 'N/A')
@@ -775,26 +1069,26 @@ def startup_event():
                 fill_level = bin_data.get('fill_level', 0)
                 status = bin_data.get('status', 'unknown')
                 battery = bin_data.get('battery', 0)
-                print(f"\n🗑️  {bin_id}")
-                print(f"   📍 Localisation: {location}")
-                print(f"   📬 Adresse: {address}")
-                print(f"   📊 Niveau de remplissage: {fill_level}%")
-                print(f"   ⚠️  Statut: {status}")
-                print(f"   🔋 Batterie: {battery}%")
+                print(f"\n  {bin_id}")
+                print(f"    Localisation: {location}")
+                print(f"    Adresse: {address}")
+                print(f"    Niveau de remplissage: {fill_level}%")
+                print(f"     Statut: {status}")
+                print(f"    Batterie: {battery}%")
             print(f"\n{'='*60}\n")
         else:
-            print("⚠️  Aucune poubelle enregistrée dans la base de données\n")
+            print("  Aucune poubelle enregistrée dans la base de données\n")
         # Afficher les utilisateurs et leurs assignations
         all_users = get_all_users()
         if all_users:
-            print("\n👥 LISTE DES UTILISATEURS:")
+            print("\n LISTE DES UTILISATEURS:")
             print(f"{'='*60}")
             for username, user_data in all_users.items():
                 assigned = user_data.get('assigned_bins', [])
-                print(f"\n👤 {username} ({user_data.get('role', 'N/A')})")
-                print(f"   📧 Email: {user_data.get('email', 'N/A')}")
-                print(f"   ✅ Approuvé: {user_data.get('is_approved', False)}")
-                print(f"   🗑️  Poubelles assignées: {', '.join(assigned) if assigned else 'Aucune'}")
+                print(f"\n {username} ({user_data.get('role', 'N/A')})")
+                print(f"    Email: {user_data.get('email', 'N/A')}")
+                print(f"    Approuvé: {user_data.get('is_approved', False)}")
+                print(f"     Poubelles assignées: {', '.join(assigned) if assigned else 'Aucune'}")
             print(f"\n{'='*60}\n")
     except Exception as e:
         print(f"Erreur lors du startup: {e}")

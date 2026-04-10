@@ -23,10 +23,10 @@ def login_as_admin():
     
     if response.status_code == 200:
         data = response.json()
-        print(f"✅ Connexion admin réussie")
+        print(f"Connexion admin réussie")
         return data["access_token"]
     else:
-        print(f"❌ Erreur de connexion: {response.status_code}")
+        print(f"Erreur de connexion: {response.status_code}")
         print(response.text)
         return None
 
@@ -39,10 +39,10 @@ def get_all_bins(token):
     
     if response.status_code == 200:
         bins = response.json()
-        print(f"✅ {len(bins)} poubelles trouvées")
+        print(f" {len(bins)} poubelles trouvées")
         return bins
     else:
-        print(f"❌ Erreur récupération poubelles: {response.status_code}")
+        print(f"Erreur récupération poubelles: {response.status_code}")
         return []
 
 def assign_bin_to_user(token, username, bin_id):
@@ -53,10 +53,10 @@ def assign_bin_to_user(token, username, bin_id):
     )
     
     if response.status_code == 200:
-        print(f"  ✓ {bin_id} assignée à {username}")
+        print(f" {bin_id} assignée à {username}")
         return True
     else:
-        print(f"  ✗ Erreur assignation {bin_id} à {username}: {response.status_code}")
+        print(f"Erreur assignation {bin_id} à {username}: {response.status_code}")
         return False
 
 def main():
@@ -95,7 +95,7 @@ def main():
     print("ASSIGNATIONS PRÉVUES:")
     print("="*60)
     for username, bins_to_assign in assignations.items():
-        print(f"\n👤 {username}: {len(bins_to_assign)} poubelles")
+        print(f"\n {username}: {len(bins_to_assign)} poubelles")
         print(f"   Poubelles: {', '.join(bins_to_assign)}")
     
     # 4. Effectuer les assignations
@@ -107,7 +107,7 @@ def main():
     fail_count = 0
     
     for username, bins_to_assign in assignations.items():
-        print(f"\n📌 Assignation pour {username}:")
+        print(f"\nAssignation pour {username}:")
         for bin_id in bins_to_assign:
             if assign_bin_to_user(token, username, bin_id):
                 success_count += 1
@@ -118,13 +118,13 @@ def main():
     print(f"\n" + "="*60)
     print("RÉSUMÉ:")
     print("="*60)
-    print(f"✅ Assignations réussies: {success_count}")
-    print(f"❌ Assignations échouées: {fail_count}")
-    print(f"📊 Total: {success_count + fail_count}")
+    print(f"Assignations réussies: {success_count}")
+    print(f"Assignations échouées: {fail_count}")
+    print(f"Total: {success_count + fail_count}")
     print("\n" + "="*60 + "\n")
     
     # 6. Vérification pour un utilisateur
-    print("🔍 Vérification pour 'simpleuser1':")
+    print("Vérification pour 'simpleuser1':")
     print("="*60)
     
     # Se connecter en tant que simpleuser1
@@ -144,13 +144,13 @@ def main():
         
         if response.status_code == 200:
             assigned = response.json()
-            print(f"✅ simpleuser1 a {len(assigned)} poubelles assignées:")
+            print(f"simpleuser1 a {len(assigned)} poubelles assignées:")
             for bin in assigned:
                 print(f"   - {bin['bin_id']}: {bin['location']} ({bin['fill_level']}%)")
         else:
-            print(f"❌ Erreur récupération poubelles: {response.status_code}")
+            print(f"Erreur récupération poubelles: {response.status_code}")
     else:
-        print(f"❌ Erreur connexion simpleuser1: {response.status_code}")
+        print(f"Erreur connexion simpleuser1: {response.status_code}")
     
     print("\n" + "="*60)
     print("SCRIPT TERMINÉ")
@@ -160,6 +160,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\n❌ ERREUR FATALE: {e}")
+        print(f"\nERREUR FATALE: {e}")
         import traceback
         traceback.print_exc()
