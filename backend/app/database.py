@@ -198,7 +198,7 @@ def get_users_collection():
         return db['users']
     return None
 def initialize_users():
-    """Initialise les utilisateurs depuis MongoDB."""
+    """Initialise les utilisateurs depuis MongoDB ou fallback JSON."""
     users_collection = get_users_collection()
     if users_collection is not None:
         try:
@@ -211,8 +211,24 @@ def initialize_users():
                     users[username] = user
             _cache['users'] = users
             print(f" Chargé {len(users)} utilisateurs depuis MongoDB")
+            return
         except Exception as e:
             print(f" Erreur chargement utilisateurs MongoDB: {e}")
+    
+    # Fallback: charger depuis data/users.json si présent
+    users_file = os.path.join(os.path.dirname(__file__), 'data', 'users.json')
+    try:
+        if os.path.exists(users_file):
+            with open(users_file, 'r', encoding='utf-8') as f:
+                payload = json.load(f)
+                users = payload.get('users', {})
+                _cache['users'] = users
+                print(f" Chargé {len(users)} utilisateurs depuis fichier JSON")
+                return
+    except Exception as e:
+        print(f" Erreur lecture fichier utilisateurs fallback: {e}")
+    
+    _cache['users'] = {}
 def get_all_users() -> Dict:
     return _cache['users']
 def get_user(username: str) -> Optional[Dict]:

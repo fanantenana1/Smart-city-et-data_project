@@ -1,0 +1,4 @@
+﻿Nom complet,Prénom,Téléphone,Email,CIN,Adresse,Rôle,Numéro voiture,Quartier assigné,Poubelles suivies (max 10+),Nombre de collectes,Dernière collecte
+Rakoto Jean,Jean,034 12 345 67,jean.rakoto@mail.com,201012345678,Lot II A Tanambao,Opérateur,101-A,Tanambao,"BIN_001, BIN_006, BIN_007",45,2026-04-14
+Rasoanaivo Lala,Lala,034 98 765 43,lala.rasoanaivo@mail.com,201076543210,Ampasampito,Opérateur,102-B,Ampasampito,"BIN_002, BIN_008",60,2026-04-15
+Ravelomanana Faly,Faly,033 22 334 55,faly.ravelomanana@mail.com,201078945612,Ankadifotsy,Superviseur,104-D,Ankadifotsy,"BIN_004, BIN_005, BIN_009",80,2026-04-15

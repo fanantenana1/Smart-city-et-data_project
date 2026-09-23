@@ -1,0 +1,56 @@
+
+================================================================================
+RAPPORT D'ANALYSE SMARTWASTE
+Généré le: 15/04/2026 19:25:20
+================================================================================
+
+1. RÉSUMÉ EXÉCUTIF
+--------------------------------------------------------------------------------
+Total de poubelles: 3
+Total de personnel: 4
+Poubelles critiques: 1
+Personnel actif: 4
+
+2. ÉTAT DES CAPTEURS
+--------------------------------------------------------------------------------
+Remplissage moyen: 79.3%
+Batterie moyenne: 50.0%
+Température moyenne: 30.9°C
+Humidité moyenne: 68.3%
+Score santé moyen: 0.4/100
+
+3. POUBELLES CRITIQUES - ACTION REQUISE
+--------------------------------------------------------------------------------
+
+• BIN_002 (Marché Central)
+  Remplissage: 78% | Batterie: 45%
+  Jours sans collecte: 999.0
+
+• BIN_003 (Quartier Sud)
+  Remplissage: 95% | Batterie: 20%
+  Jours sans collecte: 0.0
+
+
+4. TOP 5 PERSONNEL - PERFORMANCE
+--------------------------------------------------------------------------------
+
+1. Jean Dupont
+   Collectes: 234 | Score: 100.0%
+   Zone: Zone_Nord | Statut: Actif
+
+2. Paul Bernard
+   Collectes: 198 | Score: 99.0%
+   Zone: Zone_Sud | Statut: Actif
+
+3. Marie Martin
+   Collectes: 156 | Score: 78.0%
+   Zone: Zone_Centre | Statut: Actif
+
+4. Sophie Lefevre
+   Collectes: 89 | Score: 44.5%
+   Zone: Zone_Nord | Statut: Actif
+
+
+================================================================================
+Fin du rapport
+================================================================================

@@ -1,0 +1,5 @@
+user_id,first_name,last_name,phone,email,cin,vehicle_id,vehicle_type,zone_assigned,assigned_bins,total_collections,last_collection_date,status
+USER_001,Jean,Dupont,+261341234567,jean.dupont@smartwaste.mg,123456789,VEH_001,Camion,Zone_Nord,"BIN_001,BIN_004,BIN_007",234,2026-04-15,Actif
+USER_002,Marie,Martin,+261342345678,marie.martin@smartwaste.mg,987654321,VEH_002,Tricycle,Zone_Centre,"BIN_002,BIN_005",156,2026-04-14,Actif
+USER_003,Paul,Bernard,+261343456789,paul.bernard@smartwaste.mg,555666777,VEH_003,Camion,Zone_Sud,"BIN_003,BIN_006,BIN_008",198,2026-04-15,Actif
+USER_004,Sophie,Lefevre,+261344567890,sophie.lefevre@smartwaste.mg,111222333,,Vélo,Zone_Nord,"BIN_001,BIN_009",89,2026-04-12,Semi-actif

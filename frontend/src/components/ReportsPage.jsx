@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   TrendingUp, BarChart3, Calendar, Download, CheckCircle, 
   PieChart, LineChart as LineChartIcon, FileSpreadsheet, 
@@ -10,8 +10,13 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 
-const ReportsPage = ({ bins, collections, statistics }) => {
+const ReportsPage = ({ bins, collections, statistics, alerts = [], users = [] }) => {
   const [dateRange, setDateRange] = useState('week');
+  const [reportType, setReportType] = useState('weekly');
+  const [exportFormatSelection, setExportFormatSelection] = useState('excel');
+  const [selectedCategories, setSelectedCategories] = useState(['poubelles', 'collectes', 'statistiques']);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [compareMetric, setCompareMetric] = useState('fill_level');
   const [chartData, setChartData] = useState([]);
   const [statusData, setStatusData] = useState([]);
   const [volumeByDay, setVolumeByDay] = useState([]);
@@ -20,6 +25,7 @@ const ReportsPage = ({ bins, collections, statistics }) => {
   const [xlsxLoaded, setXlsxLoaded] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [highlightedBin, setHighlightedBin] = useState(null);
   const exportMenuRef = useRef(null);
 
   // Fermer le menu d'export quand on clique ailleurs
@@ -98,6 +104,93 @@ const ReportsPage = ({ bins, collections, statistics }) => {
   const totalVolume = collections.reduce((sum, col) => sum + col.volume_collected, 0);
   const avgPerCollection = collections.length > 0 ? (totalVolume / collections.length).toFixed(0) : 0;
 
+  const reportTypeLabels = {
+    daily: 'Journalier',
+    weekly: 'Hebdomadaire',
+    monthly: 'Mensuel',
+    neighborhood: 'Par quartier',
+    service: 'Par service'
+  };
+
+  const binMap = useMemo(() => bins.reduce((map, bin) => ({ ...map, [bin.bin_id]: bin }), {}), [bins]);
+
+  const filteredCollections = useMemo(() => {
+    const now = new Date();
+    const cutoffDays = dateRange === 'week' ? 7 : dateRange === 'month' ? 30 : 365;
+
+    return collections
+      .filter((col) => {
+        if (!col || !col.timestamp) return false;
+        const diffDays = (now - new Date(col.timestamp)) / (1000 * 60 * 60 * 24);
+        return diffDays <= cutoffDays;
+      })
+      .filter((col) => {
+        if (filterStatus === 'all') return true;
+        const bin = binMap[col.bin_id];
+        return (bin?.status || 'unknown') === filterStatus;
+      })
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }, [collections, dateRange, filterStatus, binMap]);
+
+  const groupedCollections = useMemo(() => {
+    if (reportType === 'neighborhood') {
+      return filteredCollections.reduce((groups, col) => {
+        const location = binMap[col.bin_id]?.location || 'Inconnu';
+        groups[location] = (groups[location] || 0) + 1;
+        return groups;
+      }, {});
+    }
+
+    if (reportType === 'service') {
+      return filteredCollections.reduce((groups, col) => {
+        const service = col.operator || 'Inconnu';
+        groups[service] = (groups[service] || 0) + 1;
+        return groups;
+      }, {});
+    }
+
+    return {};
+  }, [filteredCollections, reportType, binMap]);
+
+  const binComparisonRows = useMemo(() => {
+    return bins
+      .map((bin) => ({
+        bin_id: bin.bin_id,
+        location: bin.location,
+        status: bin.status || 'inconnu',
+        fill_level: bin.fill_level || 0,
+        battery: bin.battery || 0,
+      }))
+      .sort((a, b) => b[compareMetric] - a[compareMetric])
+      .slice(0, 8);
+  }, [bins, compareMetric]);
+
+  const exportCategories = [
+    { id: 'poubelles', label: 'Poubelles' },
+    { id: 'personnel', label: 'Personnel' },
+    { id: 'collectes', label: 'Collectes' },
+    { id: 'alertes', label: 'Alertes' },
+    { id: 'statistiques', label: 'Statistiques' }
+  ];
+
+  const toggleCategory = (category) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((item) => item !== category)
+        : [...prev, category]
+    );
+  };
+
+  const getSelectedCategoriesLabel = () => {
+    if (selectedCategories.length === 0) return 'Aucune catégorie sélectionnée';
+    return exportCategories
+      .filter((category) => selectedCategories.includes(category.id))
+      .map((category) => category.label)
+      .join(', ');
+  };
+
+  const effectiveReportTitle = reportTypeLabels[reportType] || reportTypeLabels.weekly;
+
   // Préparer les données pour les graphiques
   useEffect(() => {
     const dataByDate = {};
@@ -137,6 +230,7 @@ const ReportsPage = ({ bins, collections, statistics }) => {
     setShowExportMenu(false);
     
     try {
+      const selected = new Set(selectedCategories);
       let csvContent = '\uFEFF'; // BOM pour UTF-8
       
       csvContent += '╔══════════════════════════════════════════════════════════════════════════════╗\n';
@@ -146,40 +240,90 @@ const ReportsPage = ({ bins, collections, statistics }) => {
       csvContent += `Organisation:,SmartWaste - Commune de Fianarantsoa\n`;
       csvContent += `Date de génération:,${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}\n`;
       csvContent += `Période d'analyse:,${dateRange === 'week' ? '7 derniers jours' : dateRange === 'month' ? '30 derniers jours' : 'Année en cours'}\n`;
+      csvContent += `Type de rapport:,${effectiveReportTitle}\n`;
+      csvContent += `Catégories:,${getSelectedCategoriesLabel()}\n`;
       csvContent += '\n\n';
-      
-      csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-      csvContent += 'TABLEAU DE BORD EXÉCUTIF\n';
-      csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-      csvContent += '\n';
-      csvContent += 'Indicateur,Valeur,Unité\n';
-      
+
       const totalBins = statistics.total_bins || 0;
       const activeBins = statistics.active_bins || 0;
       const totalCollections = statistics.total_collections || 0;
       const avgFillRate = statistics.avg_fill_rate || 0;
       const efficiency = statistics.efficiency || 0;
-      
-      csvContent += `Poubelles totales,${totalBins},unités\n`;
-      csvContent += `Poubelles opérationnelles,${activeBins},unités\n`;
-      csvContent += `Total des collectes,${totalCollections},opérations\n`;
-      csvContent += `Volume total collecté,${totalVolume.toLocaleString()},litres\n`;
-      csvContent += `Volume moyen par collecte,${avgPerCollection},litres\n`;
-      csvContent += `Taux de remplissage moyen,${avgFillRate.toFixed(1)},pourcentage\n`;
-      csvContent += `Efficacité opérationnelle,${efficiency.toFixed(1)},pourcentage\n`;
-      csvContent += '\n\n';
-      
-      csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-      csvContent += 'DÉTAIL DES COLLECTES\n';
-      csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-      csvContent += '\n';
-      csvContent += 'Poubelle,Opérateur,Volume,Taux,Date,Heure\n';
-      
-      collections.slice(0, 50).forEach(col => {
-        const date = new Date(col.timestamp);
-        csvContent += `${col.bin_id},${col.operator},${col.volume_collected}L,${col.percentage}%,${date.toLocaleDateString('fr-FR')},${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}\n`;
-      });
-      
+
+      if (selected.has('statistiques')) {
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += 'TABLEAU DE BORD EXÉCUTIF\n';
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += '\n';
+        csvContent += 'Indicateur,Valeur,Unité\n';
+        csvContent += `Poubelles totales,${totalBins},unités\n`;
+        csvContent += `Poubelles opérationnelles,${activeBins},unités\n`;
+        csvContent += `Total des collectes,${totalCollections},opérations\n`;
+        csvContent += `Volume total collecté,${totalVolume.toLocaleString()},litres\n`;
+        csvContent += `Volume moyen par collecte,${avgPerCollection},litres\n`;
+        csvContent += `Taux de remplissage moyen,${avgFillRate.toFixed(1)},pourcentage\n`;
+        csvContent += `Efficacité opérationnelle,${efficiency.toFixed(1)},pourcentage\n`;
+        csvContent += '\n\n';
+      }
+
+      if (selected.has('collectes')) {
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += 'COLLECTES DÉTAILLÉES\n';
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += '\n';
+        csvContent += 'Poubelle,Opérateur,Volume,Taux,Date,Heure,Statut\n';
+        filteredCollections.slice(0, 100).forEach(col => {
+          const date = new Date(col.timestamp);
+          const status = col.percentage >= 90 ? 'Critique' : col.percentage >= 70 ? 'Attention' : 'Normal';
+          csvContent += `${col.bin_id},${col.operator},${col.volume_collected}L,${col.percentage}%,${date.toLocaleDateString('fr-FR')},${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })},${status}\n`;
+        });
+        csvContent += '\n\n';
+      }
+
+      if (selected.has('poubelles')) {
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += 'POUBELLES\n';
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += '\n';
+        csvContent += 'ID Poubelle,Localisation,Niveau (%),Statut,Capacité (L),Batterie (%),Latitude,Longitude,Température,Humidité\n';
+        bins.forEach((bin) => {
+          csvContent += `${bin.bin_id},${bin.location},${bin.fill_level},${bin.status},${bin.capacity},${bin.battery},${bin.latitude || ''},${bin.longitude || ''},${bin.temperature || 'N/A'},${bin.humidity || 'N/A'}\n`;
+        });
+        csvContent += '\n\n';
+      }
+
+      if (selected.has('personnel')) {
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += 'PERSONNEL\n';
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += '\n';
+        csvContent += 'Nom d\'utilisateur,Email,Rôle,Compte actif,Approuvé,Dernière activité\n';
+        if (users.length > 0) {
+          users.forEach((user) => {
+            csvContent += `${user.username},${user.email},${user.role},${user.is_active ? 'Oui' : 'Non'},${user.is_approved ? 'Oui' : 'Non'},${user.last_login || 'N/A'}\n`;
+          });
+        } else {
+          csvContent += 'Aucune donnée utilisateur disponible,,,,,\n';
+        }
+        csvContent += '\n\n';
+      }
+
+      if (selected.has('alertes')) {
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += 'ALERTES\n';
+        csvContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        csvContent += '\n';
+        csvContent += 'Titre,Description,Type,Statut,Date de création\n';
+        if (alerts.length > 0) {
+          alerts.forEach((alert) => {
+            csvContent += `${alert.title || 'N/A'},${alert.description || 'N/A'},${alert.type || 'N/A'},${alert.status || 'N/A'},${alert.timestamp ? new Date(alert.timestamp).toLocaleString('fr-FR') : 'N/A'}\n`;
+          });
+        } else {
+          csvContent += 'Aucune alerte disponible,,,,\n';
+        }
+        csvContent += '\n\n';
+      }
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -207,134 +351,339 @@ const ReportsPage = ({ bins, collections, statistics }) => {
     try {
       const XLSX = window.XLSX;
       const wb = XLSX.utils.book_new();
+      const selected = new Set(selectedCategories);
+      const filename = `rapport-smartwaste-${reportType}-${new Date().toISOString().split('T')[0]}.xlsx`;
 
-      // ====== FEUILLE 1: TABLEAU DE BORD ======
-      const dashboardData = [
-        ['RAPPORT ANALYTIQUE SMARTWASTE'],
-        ['Commune de Fianarantsoa'],
-        [''],
-        [`Date de génération: ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`],
-        [`Période d'analyse: ${dateRange === 'week' ? '7 derniers jours' : dateRange === 'month' ? '30 derniers jours' : 'Année en cours'}`],
-        [''],
-        ['INDICATEURS CLÉS DE PERFORMANCE'],
-        [''],
-        ['Indicateur', 'Valeur', 'Unité', 'Statut'],
-        ['Poubelles totales', statistics.total_bins || 0, 'unités', '✓'],
-        ['Poubelles opérationnelles', statistics.active_bins || 0, 'unités', '✓'],
-        ['Taux d\'opérationnalité', `${((statistics.active_bins / (statistics.total_bins || 1)) * 100).toFixed(1)}%`, 'pourcentage', 
-         (statistics.active_bins / (statistics.total_bins || 1)) >= 0.95 ? '✓ Excellent' : '⚠ À améliorer'],
-        ['Total des collectes', statistics.total_collections || 0, 'opérations', '✓'],
-        ['Volume total collecté', totalVolume.toLocaleString(), 'litres', '✓'],
-        ['Volume moyen par collecte', avgPerCollection, 'litres', avgPerCollection >= 80 ? '✓ Optimal' : '⚠ Sous-optimal'],
-        ['Taux de remplissage moyen', `${(statistics.avg_fill_rate || 0).toFixed(1)}%`, 'pourcentage', 
-         (statistics.avg_fill_rate || 0) >= 70 && (statistics.avg_fill_rate || 0) <= 85 ? '✓ Optimal' : '⚠ Attention'],
-        ['Efficacité opérationnelle', `${(statistics.efficiency || 0).toFixed(1)}%`, 'pourcentage', 
-         (statistics.efficiency || 0) >= 95 ? '✓ Excellent' : '⚠ À améliorer'],
-        [''],
-        ['RÉPARTITION DES POUBELLES PAR STATUT'],
-        [''],
-        ['Statut', 'Nombre', 'Pourcentage'],
-        ['Normal', statistics.bins_by_status?.normal || 0, `${(((statistics.bins_by_status?.normal || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`],
-        ['Attention', statistics.bins_by_status?.attention || 0, `${(((statistics.bins_by_status?.attention || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`],
-        ['Critique', statistics.bins_by_status?.critical || 0, `${(((statistics.bins_by_status?.critical || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`],
-        ['Hors ligne', statistics.bins_by_status?.offline || 0, `${(((statistics.bins_by_status?.offline || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`]
-      ];
+      const appendSheet = (title, rows, colWidths = []) => {
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        if (colWidths.length) {
+          ws['!cols'] = colWidths;
+        }
+        XLSX.utils.book_append_sheet(wb, ws, title);
+      };
 
-      const ws1 = XLSX.utils.aoa_to_sheet(dashboardData);
-      
-      // Style pour la feuille
-      ws1['!cols'] = [
-        { wch: 30 }, // Colonne A
-        { wch: 20 }, // Colonne B
-        { wch: 15 }, // Colonne C
-        { wch: 15 }  // Colonne D
-      ];
+      if (selected.has('statistiques')) {
+        const dashboardData = [
+          ['RAPPORT ANALYTIQUE SMARTWASTE'],
+          ['Commune de Fianarantsoa'],
+          [''],
+          [`Date de génération: ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`],
+          [`Type de rapport: ${effectiveReportTitle}`],
+          [''],
+          ['INDICATEURS CLÉS DE PERFORMANCE'],
+          [''],
+          ['Indicateur', 'Valeur', 'Unité', 'Statut'],
+          ['Poubelles totales', statistics.total_bins || 0, 'unités', '✓'],
+          ['Poubelles opérationnelles', statistics.active_bins || 0, 'unités', '✓'],
+          ['Taux d\'opérationnalité', `${((statistics.active_bins / (statistics.total_bins || 1)) * 100).toFixed(1)}%`, 'pourcentage', 
+            (statistics.active_bins / (statistics.total_bins || 1)) >= 0.95 ? '✓ Excellent' : '⚠ À améliorer'],
+          ['Total des collectes', statistics.total_collections || 0, 'opérations', '✓'],
+          ['Volume total collecté', totalVolume.toLocaleString(), 'litres', '✓'],
+          ['Volume moyen par collecte', avgPerCollection, 'litres', avgPerCollection >= 80 ? '✓ Optimal' : '⚠ Sous-optimal'],
+          ['Taux de remplissage moyen', `${(statistics.avg_fill_rate || 0).toFixed(1)}%`, 'pourcentage', 
+            (statistics.avg_fill_rate || 0) >= 70 && (statistics.avg_fill_rate || 0) <= 85 ? '✓ Optimal' : '⚠ Attention'],
+          ['Efficacité opérationnelle', `${(statistics.efficiency || 0).toFixed(1)}%`, 'pourcentage', 
+            (statistics.efficiency || 0) >= 95 ? '✓ Excellent' : '⚠ À améliorer'],
+          [''],
+          ['RÉPARTITION DES POUBELLES PAR STATUT'],
+          [''],
+          ['Statut', 'Nombre', 'Pourcentage'],
+          ['Normal', statistics.bins_by_status?.normal || 0, `${(((statistics.bins_by_status?.normal || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`],
+          ['Attention', statistics.bins_by_status?.attention || 0, `${(((statistics.bins_by_status?.attention || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`],
+          ['Critique', statistics.bins_by_status?.critical || 0, `${(((statistics.bins_by_status?.critical || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`],
+          ['Hors ligne', statistics.bins_by_status?.offline || 0, `${(((statistics.bins_by_status?.offline || 0) / (statistics.total_bins || 1)) * 100).toFixed(1)}%`]
+        ];
 
-      XLSX.utils.book_append_sheet(wb, ws1, 'Tableau de Bord');
-
-      // ====== FEUILLE 2: COLLECTES DÉTAILLÉES ======
-      const collectionsData = [
-        ['DÉTAIL DES COLLECTES'],
-        [''],
-        ['Poubelle', 'Opérateur', 'Volume (L)', 'Taux (%)', 'Date', 'Heure', 'Statut']
-      ];
-
-      collections.slice(0, 100).forEach(col => {
-        const date = new Date(col.timestamp);
-        const status = col.percentage >= 90 ? '🔴 Critique' : col.percentage >= 70 ? '🟠 Attention' : '🟢 Normal';
-        collectionsData.push([
-          col.bin_id,
-          col.operator,
-          col.volume_collected,
-          col.percentage,
-          date.toLocaleDateString('fr-FR'),
-          date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-          status
+        appendSheet('Tableau de Bord', dashboardData, [
+          { wch: 30 },
+          { wch: 20 },
+          { wch: 15 },
+          { wch: 15 }
         ]);
-      });
+      }
 
-      const ws2 = XLSX.utils.aoa_to_sheet(collectionsData);
-      
-      ws2['!cols'] = [
-        { wch: 15 }, // Poubelle
-        { wch: 20 }, // Opérateur
-        { wch: 12 }, // Volume
-        { wch: 10 }, // Taux
-        { wch: 15 }, // Date
-        { wch: 10 }, // Heure
-        { wch: 15 }  // Statut
-      ];
+      if (selected.has('collectes')) {
+        const collectionSheet = [
+          ['COLLECTES DÉTAILLÉES'],
+          [''],
+          ['Poubelle', 'Opérateur', 'Volume (L)', 'Taux (%)', 'Date', 'Heure', 'Statut', 'Quartier/Service']
+        ];
 
-      XLSX.utils.book_append_sheet(wb, ws2, 'Collectes Détaillées');
+        filteredCollections.slice(0, 200).forEach((col) => {
+          const date = new Date(col.timestamp);
+          const status = col.percentage >= 90 ? 'Critique' : col.percentage >= 70 ? 'Attention' : 'Normal';
+          const groupLabel = reportType === 'neighborhood'
+            ? binMap[col.bin_id]?.location || 'Inconnu'
+            : reportType === 'service'
+            ? col.operator || 'Inconnu'
+            : '';
 
-      // ====== FEUILLE 3: VOLUME PAR JOUR ======
-      const volumeData = [
-        ['VOLUME COLLECTÉ PAR JOUR'],
-        [''],
-        ['Date', 'Volume (L)', 'Nombre de Collectes', 'Volume Moyen (L)']
-      ];
+          collectionSheet.push([
+            col.bin_id,
+            col.operator,
+            col.volume_collected,
+            col.percentage,
+            date.toLocaleDateString('fr-FR'),
+            date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            status,
+            groupLabel
+          ]);
+        });
 
-      volumeByDay.forEach(item => {
-        volumeData.push([
-          item.date,
-          item.volume,
-          item.count,
-          Math.round(item.volume / item.count)
+        appendSheet('Collectes', collectionSheet, [
+          { wch: 15 },
+          { wch: 18 },
+          { wch: 12 },
+          { wch: 10 },
+          { wch: 15 },
+          { wch: 10 },
+          { wch: 12 },
+          { wch: 20 }
         ]);
-      });
+      }
 
-      const ws3 = XLSX.utils.aoa_to_sheet(volumeData);
-      ws3['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 18 }];
-      XLSX.utils.book_append_sheet(wb, ws3, 'Volume par Jour');
+      if (selected.has('poubelles')) {
+        const binsData = [
+          ['INFORMATIONS COMPLÈTES DES POUBELLES'],
+          [''],
+          ['ID Poubelle', 'Localisation', 'Niveau (%)', 'Statut', 'Capacité (L)', 'Batterie (%)', 'Latitude', 'Longitude', 'Température', 'Humidité']
+        ];
 
-      // ====== FEUILLE 4: ANALYSE DES POUBELLES ======
-      const binsAnalysisData = [
-        ['ANALYSE DES POUBELLES'],
-        [''],
-        ['ID Poubelle', 'Localisation', 'Niveau (%)', 'Statut', 'Capacité (L)', 'Batterie (%)']
-      ];
+        bins.forEach((bin) => {
+          binsData.push([
+            bin.bin_id,
+            bin.location,
+            bin.fill_level,
+            bin.status,
+            bin.capacity,
+            bin.battery,
+            bin.latitude,
+            bin.longitude,
+            bin.temperature || 'N/A',
+            bin.humidity || 'N/A'
+          ]);
+        });
 
-      Object.values(bins).forEach(bin => {
-        binsAnalysisData.push([
-          bin.bin_id,
-          bin.location,
-          bin.fill_level,
-          bin.status,
-          bin.capacity,
-          bin.battery
+        appendSheet('Poubelles', binsData, [
+          { wch: 15 },
+          { wch: 25 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 }
         ]);
-      });
+      }
 
-      const ws4 = XLSX.utils.aoa_to_sheet(binsAnalysisData);
-      ws4['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 12 }];
-      XLSX.utils.book_append_sheet(wb, ws4, 'Analyse Poubelles');
+      if (selected.has('personnel')) {
+        const userData = [
+          ['INFORMATIONS PERSONNEL'],
+          [''],
+          ['Nom d\'utilisateur', 'Email', 'Rôle', 'Compte actif', 'Approuvé', 'Dernière activité']
+        ];
 
-      // Générer et télécharger le fichier Excel
-      XLSX.writeFile(wb, `rapport-smartwaste-${new Date().toISOString().split('T')[0]}.xlsx`);
-      
+        if (users.length > 0) {
+          users.forEach((user) => {
+            userData.push([
+              user.username,
+              user.email,
+              user.role,
+              user.is_active ? 'Oui' : 'Non',
+              user.is_approved ? 'Oui' : 'Non',
+              user.last_login || 'N/A'
+            ]);
+          });
+        } else {
+          userData.push(['Aucune donnée utilisateur disponible', '', '', '', '', '']);
+        }
+
+        appendSheet('Personnel', userData, [
+          { wch: 20 },
+          { wch: 25 },
+          { wch: 15 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 18 }
+        ]);
+      }
+
+      if (selected.has('alertes')) {
+        const alertsData = [
+          ['ALERTES'],
+          [''],
+          ['Titre', 'Description', 'Type', 'Statut', 'Date de création']
+        ];
+
+        if (alerts.length > 0) {
+          alerts.forEach((alert) => {
+            alertsData.push([
+              alert.title || 'N/A',
+              alert.description || 'N/A',
+              alert.type || 'N/A',
+              alert.status || 'N/A',
+              alert.timestamp ? new Date(alert.timestamp).toLocaleString('fr-FR') : 'N/A'
+            ]);
+          });
+        } else {
+          alertsData.push(['Aucune alerte disponible', '', '', '', '']);
+        }
+
+        appendSheet('Alertes', alertsData, [
+          { wch: 25 },
+          { wch: 35 },
+          { wch: 15 },
+          { wch: 15 },
+          { wch: 22 }
+        ]);
+      }
+
+      if (wb.SheetNames.length === 0) {
+        appendSheet('Rapport', [['Aucune catégorie sélectionnée pour l\'export.']]);
+      }
+
+      XLSX.writeFile(wb, filename);
     } catch (error) {
       console.error('Erreur export Excel:', error);
       alert('Erreur lors de l\'export Excel');
+    } finally {
+      setTimeout(() => setIsExporting(false), 1000);
+    }
+  };
+
+  const formatDecimal = (value, decimals = 2) => {
+    if (value === null || value === undefined || value === '') return '';
+    const num = parseFloat(value);
+    return isNaN(num) ? '' : parseFloat(num.toFixed(decimals));
+  };
+
+  const exportBinsTableau1CSV = () => {
+    if (!xlsxLoaded || !window.XLSX) {
+      alert('Bibliothèque Excel en cours de chargement...');
+      return;
+    }
+
+    if (isExporting) return;
+    setIsExporting(true);
+    setShowExportMenu(false);
+
+    try {
+      const XLSX = window.XLSX;
+      const wb = XLSX.utils.book_new();
+      
+      const binsData = [
+        ['Bin_ID', 'Quartier', 'Fill_Level (%)', 'Température (°C)', 'Humidité (%)', 'Batterie (%)', 'Latitude', 'Longitude', 'Statut', 'Date/Heure mesure', 'Qualité Données', 'Responsable assigné', 'Nombre de collectes', 'Dernière collecte']
+      ];
+
+      bins.forEach((bin) => {
+        binsData.push([
+          bin.bin_id || '',
+          bin.location || '',
+          formatDecimal(bin.fill_level),
+          formatDecimal(bin.temperature),
+          formatDecimal(bin.humidity),
+          formatDecimal(bin.battery),
+          bin.latitude ?? '', // Pas de formatage pour latitude
+          bin.longitude ?? '', // Pas de formatage pour longitude
+          bin.status || '',
+          bin.last_update ? new Date(bin.last_update).toLocaleString('fr-FR') : '',
+          'Valide',
+          bin.assigned_to || 'Non assigné',
+          bin.collection_count || 0,
+          bin.last_collection ? new Date(bin.last_collection).toLocaleString('fr-FR') : ''
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(binsData);
+      ws['!cols'] = [
+        { wch: 12 }, // Bin_ID
+        { wch: 20 }, // Quartier
+        { wch: 15 }, // Fill_Level (%)
+        { wch: 15 }, // Température (°C)
+        { wch: 15 }, // Humidité (%)
+        { wch: 15 }, // Batterie (%)
+        { wch: 12 }, // Latitude
+        { wch: 12 }, // Longitude
+        { wch: 12 }, // Statut
+        { wch: 18 }, // Date/Heure mesure
+        { wch: 15 }, // Qualité Données
+        { wch: 18 }, // Responsable assigné
+        { wch: 18 }, // Nombre de collectes
+        { wch: 18 }  // Dernière collecte
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Poubelles');
+      XLSX.writeFile(wb, `Rapport_Poubelles_SmartWaste_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (error) {
+      console.error('Erreur export Tableau 1.xlsx:', error);
+      alert('Erreur lors de l\'export Tableau 1.xlsx');
+    } finally {
+      setTimeout(() => setIsExporting(false), 1000);
+    }
+  };
+
+  const exportPersonnelTableau2CSV = () => {
+    if (!xlsxLoaded || !window.XLSX) {
+      alert('Bibliothèque Excel en cours de chargement...');
+      return;
+    }
+
+    if (isExporting) return;
+    setIsExporting(true);
+    setShowExportMenu(false);
+
+    try {
+      const XLSX = window.XLSX;
+      const wb = XLSX.utils.book_new();
+      
+      const personnelData = [
+        ['Nom complet', 'Prénom', 'Téléphone', 'Email', 'CIN', 'Adresse', 'Rôle', 'Numéro voiture', 'Quartier assigné', 'Poubelles suivies', 'Nombre de collectes', 'Dernière collecte']
+      ];
+
+      if (users.length > 0) {
+        users.forEach((user) => {
+          personnelData.push([
+            user.full_name || user.username || '',
+            user.first_name || '',
+            user.phone || '',
+            user.email || '',
+            user.cin || '',
+            user.address || '',
+            user.role || '',
+            user.vehicle_number || '',
+            user.assigned_zone || '',
+            user.assigned_bins ? user.assigned_bins.join(', ') : '',
+            formatDecimal(user.collection_count),
+            user.last_collection ? new Date(user.last_collection).toLocaleString('fr-FR') : ''
+          ]);
+        });
+      } else {
+        personnelData.push(['Aucune donnée disponible', '', '', '', '', '', '', '', '', '', '', '']);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(personnelData);
+      ws['!cols'] = [
+        { wch: 20 }, // Nom complet
+        { wch: 15 }, // Prénom
+        { wch: 15 }, // Téléphone
+        { wch: 25 }, // Email
+        { wch: 15 }, // CIN
+        { wch: 25 }, // Adresse
+        { wch: 15 }, // Rôle
+        { wch: 15 }, // Numéro voiture
+        { wch: 20 }, // Quartier assigné
+        { wch: 25 }, // Poubelles suivies
+        { wch: 18 }, // Nombre de collectes
+        { wch: 18 }  // Dernière collecte
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Personnel');
+      XLSX.writeFile(wb, `Rapport_Personnel_SmartWaste_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (error) {
+      console.error('Erreur export Tableau 2.xlsx:', error);
+      alert('Erreur lors de l\'export Tableau 2.xlsx');
     } finally {
       setTimeout(() => setIsExporting(false), 1000);
     }
@@ -618,6 +967,64 @@ const ReportsPage = ({ bins, collections, statistics }) => {
     }
   };
 
+  // Export Données Poubelles et Personnel (Excel seulement)
+  const exportBinsPersonnelData = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+    setShowExportMenu(false);
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/export/bins-personnel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('sw_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Erreur lors de l\'export');
+      }
+
+      // Télécharger le fichier
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DONNEES_POUBELLES_PERSONNEL_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      // Notification de succès
+      if (window.showNotification) {
+        window.showNotification('✅ Données poubelles et personnel exportées avec succès!', 'success');
+      } else {
+        alert('✅ Données poubelles et personnel exportées avec succès!');
+      }
+
+    } catch (error) {
+      console.error('Erreur export données poubelles/personnel:', error);
+      
+      let errorMessage = 'Erreur lors de l\'export des données poubelles et personnel';
+      if (error.message.includes('Pipeline ETL non disponible')) {
+        errorMessage = 'Service ETL non disponible sur ce serveur';
+      } else if (error.message.includes('rôle insuffisant')) {
+        errorMessage = 'Accès refusé: vous devez être administrateur ou collecteur';
+      }
+      
+      if (window.showNotification) {
+        window.showNotification(`❌ ${errorMessage}`, 'error');
+      } else {
+        alert(`❌ ${errorMessage}`);
+      }
+    } finally {
+      setTimeout(() => setIsExporting(false), 1000);
+    }
+  };
+
   // Composant Tooltip personnalisé
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -689,67 +1096,160 @@ const ReportsPage = ({ bins, collections, statistics }) => {
                 disabled={isExporting}
                 className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl px-6 py-3 font-bold hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:scale-105 transform"
               >
-                {isExporting ? (
-                  <>
-                    <RefreshCw size={20} className="animate-spin" />
-                    Export en cours...
-                  </>
-                ) : (
-                  <>
-                    <FileDown size={20} />
-                    Exporter
-                    <ChevronDown size={18} className={`transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
-                  </>
-                )}
+                <FileDown size={20} />
+                Exporter
+                <ChevronDown size={18} className={`transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {/* Menu déroulant */}
               {showExportMenu && !isExporting && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border-2 border-gray-100 overflow-hidden z-50 animate-slideDown">
-                  <div className="py-2">
-                    <button
-                      onClick={exportToCSV}
-                      className="w-full px-5 py-3 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 group"
-                    >
-                      <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
-                        <FileSpreadsheet className="text-green-600" size={20} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900">CSV</p>
-                        <p className="text-xs text-gray-500">Fichier texte délimité</p>
-                      </div>
-                    </button>
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border-2 border-gray-100 overflow-hidden z-50 animate-slideDown">
+                  <div className="px-4 py-4 space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Type de rapport</p>
+                      <select
+                        value={reportType}
+                        onChange={(e) => setReportType(e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:border-blue-400 focus:ring-blue-100 focus:ring-4"
+                      >
+                        <option value="daily">Journalier</option>
+                        <option value="weekly">Hebdomadaire</option>
+                        <option value="monthly">Mensuel</option>
+                        <option value="neighborhood">Par quartier</option>
+                        <option value="service">Par service</option>
+                      </select>
+                    </div>
 
-                    <button
-                      onClick={exportToExcel}
-                      className="w-full px-5 py-3 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 group"
-                    >
-                      <div className="p-2 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
-                        <FileSpreadsheet className="text-emerald-600" size={20} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900">Excel</p>
-                        <p className="text-xs text-gray-500">Tableur Microsoft Excel</p>
-                      </div>
-                    </button>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Format de fichier</p>
+                      <select
+                        value={exportFormatSelection}
+                        onChange={(e) => setExportFormatSelection(e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:border-blue-400 focus:ring-blue-100 focus:ring-4"
+                      >
+                        <option value="excel">Excel</option>
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF</option>
+                      </select>
+                    </div>
 
-                    <button
-                      onClick={exportToPDF}
-                      className="w-full px-5 py-3 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 group"
-                    >
-                      <div className="p-2 bg-red-50 rounded-lg group-hover:bg-red-100 transition-colors">
-                        <FileText className="text-red-600" size={20} />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Catégories à inclure</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {exportCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={() => toggleCategory(category.id)}
+                            className={`rounded-xl border px-3 py-2 text-left text-sm ${selectedCategories.includes(category.id) ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300'}`}
+                          >
+                            {category.label}
+                          </button>
+                        ))}
                       </div>
-                      <div>
-                        <p className="font-bold text-gray-900">PDF</p>
-                        <p className="text-xs text-gray-500">Document portable</p>
-                      </div>
-                    </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-xs text-gray-500">Sélection : {getSelectedCategoriesLabel()}</div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (exportFormatSelection === 'excel') {
+                            exportToExcel();
+                          } else if (exportFormatSelection === 'csv') {
+                            exportToCSV();
+                          } else {
+                            exportToPDF();
+                          }
+                        }}
+                        className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Générer le rapport
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportBinsTableau1CSV}
+                        disabled={isExporting}
+                        className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                      >
+                        📊 Rapport Poubelles (.xlsx)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={exportPersonnelTableau2CSV}
+                        disabled={isExporting}
+                        className="w-full rounded-xl border border-green-200 bg-white px-4 py-3 text-sm font-semibold text-green-700 hover:bg-green-50 hover:border-green-300 transition-colors"
+                      >
+                        👥 Rapport Personnel (.xlsx)
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-200">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Résumé du rapport</h2>
+          <p className="text-sm text-gray-600 mb-3">Type de rapport : <span className="font-semibold text-gray-900">{effectiveReportTitle}</span></p>
+          <p className="text-sm text-gray-600 mb-3">Période analysée : <span className="font-semibold text-gray-900">{dateRange === 'week' ? '7 derniers jours' : dateRange === 'month' ? '30 derniers jours' : 'Année en cours'}</span></p>
+          <p className="text-sm text-gray-600 mb-3">Collectes affichées : <span className="font-semibold text-gray-900">{filteredCollections.length}</span></p>
+          <p className="text-sm text-gray-600">Catégories incluses :</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {exportCategories.filter(cat => selectedCategories.includes(cat.id)).map(cat => (
+              <span key={cat.id} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{cat.label}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-200">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Filtres comparatifs</h2>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">Statut</p>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:border-blue-400 focus:ring-blue-100 focus:ring-4"
+              >
+                <option value="all">Tous</option>
+                <option value="normal">Normal</option>
+                <option value="attention">Attention</option>
+                <option value="critical">Critique</option>
+                <option value="offline">Hors ligne</option>
+              </select>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">Comparaison</p>
+              <select
+                value={compareMetric}
+                onChange={(e) => setCompareMetric(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:border-blue-400 focus:ring-blue-100 focus:ring-4"
+              >
+                <option value="fill_level">Remplissage</option>
+                <option value="battery">Batterie</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-200">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Groupes</h2>
+          {reportType === 'neighborhood' || reportType === 'service' ? (
+            <div className="space-y-3">
+              {Object.entries(groupedCollections).slice(0, 5).map(([key, value]) => (
+                <div key={key} className="flex justify-between rounded-2xl bg-gray-50 p-4">
+                  <span className="text-sm font-semibold text-gray-800">{key}</span>
+                  <span className="text-sm font-bold text-blue-700">{value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600">Les données sont affichées selon le type de rapport sélectionné.</p>
+          )}
         </div>
       </div>
 

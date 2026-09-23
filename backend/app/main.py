@@ -9,6 +9,7 @@ import asyncio
 import os
 import io
 import random
+import logging
 from .database import (
     initialize_database,
     get_all_bins,
@@ -43,6 +44,21 @@ from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from statistics import mean, median
 from collections import defaultdict
+
+# ===== IMPORTS POUR ETL =====
+import sys
+from pathlib import Path
+
+# Ajouter le chemin du pipeline ETL (racine du projet)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+try:
+    from pipeline_etl_smartwaste import smartwaste_etl_pipeline
+    ETL_AVAILABLE = True
+except ImportError:
+    print("⚠️  Pipeline ETL non disponible - endpoints /api/export/* désactivés")
+    smartwaste_etl_pipeline = None
+    ETL_AVAILABLE = False
 # Simple JWT settings (override via env if needed)
 SECRET_KEY = "supersecret_smartwaste_key"
 ALGORITHM = "HS256"
@@ -50,6 +66,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 # Simple in-memory passwords for demo users (in production use hashed passwords)
 user_passwords: Dict[str, str] = {}
 app = FastAPI(title="SmartWaste API")
+
+# Configuration du logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
 # Configuration CORS pour React
 app.add_middleware(
     CORSMiddleware,
@@ -125,7 +151,14 @@ async def jwt_required(credentials: HTTPAuthorizationCredentials = Depends(http_
     username = payload.get("sub")
     if not username:
         raise HTTPException(status_code=401, detail="Invalid token payload")
-    return {"username": username}
+    
+    # Récupérer les informations complètes de l'utilisateur
+    from .database import get_user
+    user = get_user(username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    return user
 # Stockage en mémoire (pour la démo)
 bins_data = {}  # Will be populated from database
 users_data = {}
@@ -867,8 +900,12 @@ async def export_json(current_user: dict = Depends(jwt_required)):
         raise HTTPException(status_code=500, detail=f"Erreur export JSON: {str(e)}")
 
 @app.get("/api/export/csv/{table}")
-async def export_csv(table: str = Path(..., pattern="^(poubelles|historiques|predictions|users|utilisateurs)$"), current_user: dict = Depends(jwt_required)):
+async def export_csv(table: str, current_user: dict = Depends(jwt_required)):
     """Exporte une table en CSV"""
+    # Validation manuelle du paramètre table
+    if table not in ["poubelles", "historiques", "predictions", "users", "utilisateurs"]:
+        raise HTTPException(status_code=400, detail="Table invalide")
+    
     try:
         from . import export_reports
         exporteur = export_reports.ExporteurRapports()
@@ -1094,6 +1131,74 @@ def startup_event():
         print(f"Erreur lors du startup: {e}")
         import traceback
         traceback.print_exc()
+
+# ============================================================================
+# ENDPOINTS EXPORT ETL
+# ============================================================================
+
+@app.post("/api/export/bins-personnel")
+async def export_bins_personnel_data(
+    current_user: Dict = Depends(jwt_required)
+):
+    """
+    Génère un fichier Excel avec les données des poubelles et du personnel
+    Lance automatiquement le pipeline ETL en mode 'bins_personnel'
+    
+    POST /api/export/bins-personnel
+    Headers: Authorization: Bearer <token>
+    
+    Retourne: Fichier Excel avec 2 onglets
+    """
+    
+    if not ETL_AVAILABLE or not smartwaste_etl_pipeline:
+        raise HTTPException(
+            status_code=501, 
+            detail="Pipeline ETL non disponible sur ce serveur"
+        )
+    
+    try:
+        # Vérifier les permissions (admin, collector ou simple_user)
+        user_role = current_user.get('role')
+        if user_role not in ['admin', 'collector', 'simple_user']:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Accès refusé: rôle '{user_role}' insuffisant. Rôles autorisés: admin, collector, simple_user"
+            )
+        
+        logger.info(f"🔄 Démarrage export données poubelles/personnel - User: {current_user.get('username')}")
+        
+        # Créer le dossier exports si nécessaire
+        from pathlib import Path
+        exports_dir = Path(__file__).resolve().parents[1] / "exports"
+        exports_dir.mkdir(parents=True, exist_ok=True)
+        output_file = exports_dir / "DONNEES_POUBELLES_PERSONNEL.xlsx"
+        
+        # Lancer le pipeline ETL en mode bins_personnel et écrire directement dans backend/exports
+        df_bins, df_personnel = smartwaste_etl_pipeline(mode="bins_personnel", output_file=str(output_file))
+        
+        if not output_file.exists():
+            raise HTTPException(
+                status_code=500,
+                detail=f"Fichier généré introuvable: {output_file}"
+            )
+        
+        return FileResponse(
+            path=str(output_file),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            filename=f"DONNEES_POUBELLES_PERSONNEL_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        )
+    
+    except Exception as e:
+        logger.error(f"❌ Erreur export données poubelles/personnel: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur génération fichier: {str(e)}"
+        )
+
+# ============================================================================
+# MAIN
+# ============================================================================
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

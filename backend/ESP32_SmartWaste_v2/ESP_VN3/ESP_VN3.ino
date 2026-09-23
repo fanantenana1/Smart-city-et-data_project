@@ -12,7 +12,7 @@ DHT dht(DHT_PIN, DHT_TYPE);
 // ===== CONFIGURATION =====sudo create_ap wlp2s0 enp3s0 WIFA 00000000@1
 const char* ssid = "WIFA";
 const char* password = "00000000@1";
-const char* serverUrl = "http://169.254.14.70:8000/api/bin/update";
+const char* serverUrl = "http://192.168.137.66:8000/api/bin/update";
 
 // ===== CHOISIR LA POUBELLE =====
 #define USE_PBL_5    // Exemple: ESP32 #5 → PBL-5
@@ -84,7 +84,7 @@ void setup() {
     Serial.println("\n✅ WiFi connecté!");
     Serial.print("IP: ");
     Serial.println(WiFi.localIP());
-  } else {
+  } else {Moyen
     Serial.println("\n❌ WiFi non connecté!");
   }
   

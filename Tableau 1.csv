@@ -1,0 +1,4 @@
+﻿Bin_ID,Quartier,Fill_Level (%),Température (°C),Humidité (%),Batterie (%),Latitude,Longitude,Statut,Date/Heure mesure,Qualité Données,Responsable assigné,Nombre de collectes,Dernière collecte
+BIN_001,Tanambao,75,28.5,65,80,"'-21.4521",47.0852,Normal,2026-04-15 10:30,Bon,Rakoto Jean,15,2026-04-14
+BIN_002,Ampasampito,92,31.0,70,65,"'-18.8792",47.5079,Critique,2026-04-15 10:32,Moyen,Rasoanaivo Lala,20,2026-04-15
+BIN_003,Isotry,40,27.2,60,90,"'-18.9101",47.5201,Normal,2026-04-15 10:35,Bon,Andrianina Hery,12,2026-04-13

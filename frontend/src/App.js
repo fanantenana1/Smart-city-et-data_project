@@ -112,9 +112,16 @@ const SmartWasteDashboard = () => {
     try {
       const response = await fetch(`${API_URL}/collections`);
       const data = await response.json();
-      setCollections(data.slice(0, 5));
+      if (Array.isArray(data)) {
+        setCollections(data);
+      } else if (data && Array.isArray(data.data)) {
+        setCollections(data.data);
+      } else {
+        setCollections([]);
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des collectes:', error);
+      setCollections([]);
     }
   }, []);
 
@@ -270,7 +277,7 @@ const SmartWasteDashboard = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-800">SmartWaste</h1>
-              <p className="text-xs text-slate-500">Commune de Fianarantsoa</p>
+              <p className="text-xs text-slate-500">Pour l'urbains</p>
             </div>
           </div>
           
@@ -671,7 +678,7 @@ const SmartWasteDashboard = () => {
                     <p className="font-semibold">{alert.title}</p>
                     <p className="text-sm text-gray-700">{alert.description}</p>
                     <p className="text-xs text-gray-500 mt-1">📍 {alert.location}</p>
-                    {alert.assigned_to && <p className="text-xs text-gray-600 mt-1">👤 Assigné à: {alert.assigned_to}</p>}
+                    {alert.assigned_to && <p className="text-xs text-gray-600 mt-1"> Assigné à: {alert.assigned_to}</p>}
                   </div>
                 </div>
                 <button className={`px-4 py-2 rounded-lg text-white font-semibold ${

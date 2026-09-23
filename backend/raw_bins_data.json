@@ -1,0 +1,82 @@
+{
+  "bins": [
+    {
+      "bin_id": "BIN_001",
+      "location": "Rue Principale, Fianarantsoa",
+      "latitude": -21.4545,
+      "longitude": 47.5333,
+      "capacity": 240,
+      "status": "normal",
+      "sensors": {
+        "fill_level": 65,
+        "temperature": 28.5,
+        "humidity": 72,
+        "battery": 85,
+        "signal_strength": -65
+      },
+      "last_collection": {
+        "timestamp": "2026-04-14T10:30:00Z",
+        "operator_id": "OP_001",
+        "volume_collected": 150,
+        "notes": "Collecte normale"
+      },
+      "assignment": {
+        "zone": "Zone_Nord",
+        "responsible_id": "USER_001",
+        "assignment_date": "2026-01-01"
+      }
+    },
+    {
+      "bin_id": "BIN_002",
+      "location": "Marché Central",
+      "latitude": -21.45,
+      "longitude": 47.54,
+      "capacity": 240,
+      "status": "attention",
+      "sensors": {
+        "fill_level": 78,
+        "temperature": 31.2,
+        "humidity": 68,
+        "battery": 45,
+        "signal_strength": -72
+      },
+      "last_collection": null,
+      "assignment": {
+        "zone": "Zone_Centre",
+        "responsible_id": "USER_002",
+        "assignment_date": "2026-01-05"
+      }
+    },
+    {
+      "bin_id": "BIN_003",
+      "location": "Quartier Sud",
+      "latitude": -21.46,
+      "longitude": 47.52,
+      "capacity": 120,
+      "status": "critical",
+      "sensors": {
+        "fill_level": 95,
+        "temperature": 33.1,
+        "humidity": 65,
+        "battery": 20,
+        "signal_strength": -78
+      },
+      "last_collection": {
+        "timestamp": "2026-04-15T06:45:00Z",
+        "operator_id": "OP_002",
+        "volume_collected": 100,
+        "notes": "Urgence"
+      },
+      "assignment": {
+        "zone": "Zone_Sud",
+        "responsible_id": "USER_003",
+        "assignment_date": "2026-01-10"
+      }
+    }
+  ],
+  "extraction_timestamp": "2026-04-15T08:00:00Z",
+  "metadata": {
+    "total_bins": 3,
+    "last_sync": "2026-04-15T08:00:00Z"
+  }
+}

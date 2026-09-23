@@ -157,7 +157,7 @@ const BinDetailPage = ({ bins, selectedBin, onBack }) => {
           <span>Voir sur la Carte</span>
         </button>
         <button className="bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition font-semibold flex items-center justify-center space-x-2">
-          <span>⚠️</span>
+          <span></span>
           <span>Signaler un Problème</span>
         </button>
       </div>

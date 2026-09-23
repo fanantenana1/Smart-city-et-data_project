@@ -213,9 +213,8 @@ if __name__ == "__main__":
         location="Rue de la Paix, Fianarantsoa",
         fill_level=98.5,
         status="critical"
-    )
-<<<<<<< HEAD
+    )   
     print(f"Résultat du test: {' Succès' if result else ' Échec'}")
-=======
+
     print(f"Résultat du test: {'✅ Succès' if result else '❌ Échec'}")
->>>>>>> a612e353b25388bfb5eef16c98a055627ada6051
+

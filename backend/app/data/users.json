@@ -1,0 +1,64 @@
+{
+  "users": {
+    "admin": {
+      "username": "admin",
+      "email": "admin@smartwaste.com",
+      "password_hash": "admin123",
+      "full_name": "Administrateur System",
+      "role": "admin",
+      "is_active": true,
+      "is_approved": true,
+      "created_at": "2024-01-01T00:00:00",
+      "last_login": null,
+      "assigned_bins": []
+    },
+    "collector1": {
+      "username": "collector1",
+      "email": "collector1@smartwaste.com",
+      "password_hash": "collector123",
+      "full_name": "Jean Collector",
+      "role": "collector",
+      "is_active": true,
+      "is_approved": true,
+      "created_at": "2024-01-01T00:00:00",
+      "last_login": null,
+      "assigned_bins": []
+    },
+    "collector2": {
+      "username": "collector2",
+      "email": "collector2@smartwaste.com",
+      "password_hash": "collector123",
+      "full_name": "Marie Collector",
+      "role": "collector",
+      "is_active": true,
+      "is_approved": true,
+      "created_at": "2024-01-01T00:00:00",
+      "last_login": null,
+      "assigned_bins": []
+    },
+    "user1": {
+      "username": "user1",
+      "email": "user1@smartwaste.com",
+      "password_hash": "user123",
+      "full_name": "Robert User",
+      "role": "simple_user",
+      "is_active": true,
+      "is_approved": true,
+      "created_at": "2024-01-01T00:00:00",
+      "last_login": null,
+      "assigned_bins": []
+    },
+    "user2": {
+      "username": "user2",
+      "email": "user2@smartwaste.com",
+      "password_hash": "user123",
+      "full_name": "Sophie User",
+      "role": "simple_user",
+      "is_active": true,
+      "is_approved": false,
+      "created_at": "2024-01-01T00:00:00",
+      "last_login": null,
+      "assigned_bins": []
+    }
+  }
+}
